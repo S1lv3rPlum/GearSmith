@@ -3,7 +3,7 @@ const CarContext = createContext();
 const initialCars = [
   {
     id: '1',
-    make: 'Ford',
+    make: 'DEMO-Ford',
     model: 'Mustang',
     year: 1967,
     photoUri: null,
@@ -17,14 +17,6 @@ const initialCars = [
         photoUris: [],
       },
     ],
-  },
-  {
-    id: '2',
-    make: 'Chevy',
-    model: 'Camaro',
-    year: 1969,
-    photoUri: null,
-    maintenanceRecords: [],
   },
 ];
 export const CarProvider = ({ children }) => {
@@ -77,4 +69,5 @@ export const CarProvider = ({ children }) => {
     </CarContext.Provider>
   );
 };
+
 export const useCars = () => useContext(CarContext);
