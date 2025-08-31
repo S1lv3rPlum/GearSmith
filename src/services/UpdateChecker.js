@@ -1,23 +1,14 @@
-// Skeleton service for in-app update logic using react-native-in-app-update
-import InAppUpdate from 'react-native-in-app-update';
+// Dummy UpdateChecker without react-native-in-app-update to avoid build errors
 const UpdateChecker = {
   checkForUpdate: async () => {
-    try {
-      const updateStatus = await InAppUpdate.checkNeedsUpdate();
-      return {
-        available: updateStatus.shouldUpdate,
-        type: updateStatus.flexible ? 'flexible' : 'immediate',
-      };
-    } catch (error) {
-      throw new Error('Update check failed');
-    }
+    // Always report no update available
+    return {
+      available: false,
+      type: null,
+    };
   },
   startUpdate: async (type) => {
-    if (type === 'flexible') {
-      await InAppUpdate.startFlexibleUpdate();
-    } else {
-      await InAppUpdate.startImmediateUpdate();
-    }
+    // No-op: update system is disabled/removed
   },
 };
 export default UpdateChecker;
