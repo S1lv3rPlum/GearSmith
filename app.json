@@ -1,6 +1,6 @@
 {
  "expo": {
-  "name": "automotive-app",
+  "name": "GearSmith",
   "slug": "snack-b1ed90bd-53bf-46df-bc6f-f37db514ca75",
   "version": "1.0.0",
   "orientation": "portrait",
@@ -32,7 +32,7 @@
       "package": "com.getdataforge.gearsmith"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/gearsmithfavicon.png"
     },
     "extra": {
       "eas": {
