@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Platform,
   FlatList,
+  SafeAreaView,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useCars } from '../context/CarContext';
@@ -117,76 +118,92 @@ export default function AddMaintenanceScreen({ route, navigation }) {
     </View>
   );
   return (
-    <ScrollView
-      contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={[styles.label, { color: theme.text }]}>Maintenance Type *</Text>
-      <TextInput
-        style={[styles.input, { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' }]}
-        placeholder="Oil Change, Tire Rotation, etc."
-        placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
-        value={type}
-        onChangeText={setType}
-      />
-      <Text style={[styles.label, { color: theme.text }]}>Date of Service *</Text>
-      <TextInput
-        style={[styles.input, { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' }]}
-        placeholder="YYYY-MM-DD"
-        placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
-        value={date}
-        onChangeText={setDate}
-      />
-      <Text style={[styles.label, { color: theme.text }]}>Mileage at Service</Text>
-      <TextInput
-        style={[styles.input, { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' }]}
-        placeholder="e.g. 15000"
-        placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
-        value={mileage}
-        onChangeText={setMileage}
-        keyboardType="numeric"
-      />
-      <Text style={[styles.label, { color: theme.text }]}>Notes</Text>
-      <TextInput
-        style={[
-          styles.input,
-          styles.notesInput,
-          { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' },
-        ]}
-        placeholder="Additional details"
-        placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
-        value={notes}
-        onChangeText={setNotes}
-        multiline
-        numberOfLines={4}
-      />
-      <View style={styles.buttonRow}>
-        <Button title="Pick Photos" onPress={pickImage} color={theme.accent} />
-        <View style={{ width: 16 }} />
-        <Button title="Take Photo" onPress={takePhoto} color={theme.accent} />
-      </View>
-      {photoUris.length > 0 && (
-        <>
-          <Text style={[styles.label, { marginTop: 16, color: theme.text }]}>Selected Photos:</Text>
-          <FlatList
-            data={photoUris}
-            horizontal
-            keyExtractor={(_, idx) => idx.toString()}
-            renderItem={renderImageItem}
-            style={styles.imageList}
-            contentContainerStyle={{ paddingVertical: 8 }}
-          />
-        </>
-      )}
-      <View style={{ marginTop: 24 }}>
-        <Button title="Save Maintenance" onPress={onSubmit} color={theme.accent} />
-      </View>
-    </ScrollView>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScrollView
+        contentContainerStyle={[styles.container]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={[styles.label, { color: theme.text }]}>Maintenance Type *</Text>
+        <TextInput
+          style={[
+            styles.input,
+            { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' },
+          ]}
+          placeholder="Oil Change, Tire Rotation, etc."
+          placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
+          value={type}
+          onChangeText={setType}
+        />
+        <Text style={[styles.label, { color: theme.text }]}>Date of Service *</Text>
+        <TextInput
+          style={[
+            styles.input,
+            { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' },
+          ]}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
+          value={date}
+          onChangeText={setDate}
+        />
+        <Text style={[styles.label, { color: theme.text }]}>Mileage at Service</Text>
+        <TextInput
+          style={[
+            styles.input,
+            { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' },
+          ]}
+          placeholder="e.g. 15000"
+          placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
+          value={mileage}
+          onChangeText={setMileage}
+          keyboardType="numeric"
+        />
+        <Text style={[styles.label, { color: theme.text }]}>Notes</Text>
+        <TextInput
+          style={[
+            styles.input,
+            styles.notesInput,
+            { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' },
+          ]}
+          placeholder="Additional details"
+          placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
+          value={notes}
+          onChangeText={setNotes}
+          multiline
+          numberOfLines={4}
+        />
+        <View style={styles.buttonRow}>
+          <Button title="Pick Photos" onPress={pickImage} color={theme.accent} />
+          <View style={{ width: 16 }} />
+          <Button title="Take Photo" onPress={takePhoto} color={theme.accent} />
+        </View>
+        {photoUris.length > 0 && (
+          <>
+            <Text style={[styles.label, { marginTop: 16, color: theme.text }]}>Selected Photos:</Text>
+            <FlatList
+              data={photoUris}
+              horizontal
+              keyExtractor={(_, idx) => idx.toString()}
+              renderItem={renderImageItem}
+              style={styles.imageList}
+              contentContainerStyle={{ paddingVertical: 8 }}
+            />
+          </>
+        )}
+        <View style={styles.saveButtonContainer}>
+          <Button title="Save Maintenance" onPress={onSubmit} color={theme.accent} />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     padding: 16,
+    paddingBottom: 40, // Extra bottom padding so content is above nav bar
   },
   label: {
     fontWeight: 'bold',
@@ -236,5 +253,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 20,
     fontWeight: 'bold',
+  },
+  saveButtonContainer: {
+    marginTop: 24,
   },
 });
