@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  SafeAreaView,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useCars } from '../context/CarContext';
@@ -127,85 +128,129 @@ export default function AddCarScreen({ route, navigation }) {
     navigation.goBack();
   };
   return (
-    <KeyboardAvoidingView
-      style={[styles.flex, { backgroundColor: theme.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={[styles.heading, { color: theme.text }]}>
-          {carToEdit ? 'Edit Car' : 'Add New Car'}
-        </Text>
-        {photoUri ? (
-          <Image source={{ uri: photoUri }} style={styles.carPhoto} />
-        ) : (
-          <View style={[styles.photoPlaceholder, { backgroundColor: theme.mode === 'dark' ? '#333' : '#f0f0f0' }]}>
-            <Text style={[styles.photoPlaceholderText, { color: theme.mode === 'dark' ? '#aaa' : '#888' }]}>
-              No photo selected
-            </Text>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <Text style={[styles.heading, { color: theme.text }]}>
+            {carToEdit ? 'Edit Car' : 'Add New Car'}
+          </Text>
+          {photoUri ? (
+            <Image source={{ uri: photoUri }} style={styles.carPhoto} />
+          ) : (
+            <View
+              style={[
+                styles.photoPlaceholder,
+                { backgroundColor: theme.mode === 'dark' ? '#333' : '#f0f0f0' },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.photoPlaceholderText,
+                  { color: theme.mode === 'dark' ? '#aaa' : '#888' },
+                ]}
+              >
+                No photo selected
+              </Text>
+            </View>
+          )}
+          <View style={styles.photoButtonsContainer}>
+            <Button title="Pick a Photo" onPress={pickPhoto} color={theme.accent} />
+            <View style={styles.photoButtonSpacer} />
+            <Button title="Take a Photo" onPress={takePhoto} color={theme.accent} />
           </View>
-        )}
-        <View style={styles.photoButtonsContainer}>
-          <Button title="Pick a Photo" onPress={pickPhoto} color={theme.accent} />
-          <View style={styles.photoButtonSpacer} />
-          <Button title="Take a Photo" onPress={takePhoto} color={theme.accent} />
-        </View>
-        <Text style={[styles.label, { color: theme.text }]}>Make *</Text>
-        <TextInput
-          style={[styles.input, { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' }]}
-          placeholder="e.g., Ford"
-          placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
-          value={make}
-          onChangeText={setMake}
-          autoCapitalize="words"
-          autoCorrect={false}
-        />
-        <Text style={[styles.label, { color: theme.text }]}>Model *</Text>
-        <TextInput
-          style={[styles.input, { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' }]}
-          placeholder="e.g., Mustang"
-          placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
-          value={model}
-          onChangeText={setModel}
-          autoCapitalize="words"
-          autoCorrect={false}
-        />
-        <Text style={[styles.label, { color: theme.text }]}>Year *</Text>
-        <TextInput
-          style={[styles.input, { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' }]}
-          placeholder="e.g., 1967"
-          placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
-          value={year}
-          onChangeText={setYear}
-          keyboardType="numeric"
-          maxLength={4}
-        />
-        <Text style={[styles.label, { color: theme.text }]}>Nickname (optional)</Text>
-        <TextInput
-          style={[styles.input, { borderColor: theme.accent, color: theme.text, backgroundColor: theme.mode === 'dark' ? '#222' : '#fff' }]}
-          placeholder="Your nickname for this car"
-          placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
-          value={nickname}
-          onChangeText={setNickname}
-          autoCapitalize="words"
-          autoCorrect={false}
-        />
-        <View style={styles.buttonContainer}>
-          <Button
-            title={carToEdit ? 'Save Changes' : 'Add Car'}
-            onPress={validateAndSubmit}
-            color={theme.accent}
+          <Text style={[styles.label, { color: theme.text }]}>Make *</Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                borderColor: theme.accent,
+                color: theme.text,
+                backgroundColor: theme.mode === 'dark' ? '#222' : '#fff',
+              },
+            ]}
+            placeholder="e.g., Ford"
+            placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
+            value={make}
+            onChangeText={setMake}
+            autoCapitalize="words"
+            autoCorrect={false}
           />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <Text style={[styles.label, { color: theme.text }]}>Model *</Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                borderColor: theme.accent,
+                color: theme.text,
+                backgroundColor: theme.mode === 'dark' ? '#222' : '#fff',
+              },
+            ]}
+            placeholder="e.g., Mustang"
+            placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
+            value={model}
+            onChangeText={setModel}
+            autoCapitalize="words"
+            autoCorrect={false}
+          />
+          <Text style={[styles.label, { color: theme.text }]}>Year *</Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                borderColor: theme.accent,
+                color: theme.text,
+                backgroundColor: theme.mode === 'dark' ? '#222' : '#fff',
+              },
+            ]}
+            placeholder="e.g., 1967"
+            placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
+            value={year}
+            onChangeText={setYear}
+            keyboardType="numeric"
+            maxLength={4}
+          />
+          <Text style={[styles.label, { color: theme.text }]}>Nickname (optional)</Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                borderColor: theme.accent,
+                color: theme.text,
+                backgroundColor: theme.mode === 'dark' ? '#222' : '#fff',
+              },
+            ]}
+            placeholder="Your nickname for this car"
+            placeholderTextColor={theme.mode === 'dark' ? '#888' : '#999'}
+            value={nickname}
+            onChangeText={setNickname}
+            autoCapitalize="words"
+            autoCorrect={false}
+          />
+          <View style={styles.buttonContainer}>
+            <Button
+              title={carToEdit ? 'Save Changes' : 'Add Car'}
+              onPress={validateAndSubmit}
+              color={theme.accent}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   flex: {
     flex: 1,
   },
   container: {
     padding: 20,
+    paddingBottom: 40, // extra bottom padding to avoid phone nav bar covering the button
   },
   heading: {
     fontSize: 24,
