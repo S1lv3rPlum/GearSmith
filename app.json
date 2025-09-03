@@ -1,35 +1,32 @@
 {
- "expo": {
-  "name": "GearSmith",
-  "slug": "snack-b1ed90bd-53bf-46df-bc6f-f37db514ca75",
-  "version": "1.0.0",
-  "orientation": "portrait",
-  "icon": "./assets/icon.png",
-  "userInterfaceStyle": "light",
-  "newArchEnabled": true,
-  "splash": {
-    "image": "./assets/splash-icon.png",
-    "resizeMode": "contain",
-    "backgroundColor": "#ffffff"
-  },
-  "android": {
-    "versionCode": 3
-  }
-}
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.getdataforge.gearsmith",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+  "expo": {
+    "name": "GearSmith",
+    "slug": "snack-b1ed90bd-53bf-46df-bc6f-f37db514ca75",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
     },
     "android": {
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.jpg",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.getdataforge.gearsmith"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.getdataforge.gearsmith",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "web": {
       "favicon": "./assets/gearsmithfavicon.png"
