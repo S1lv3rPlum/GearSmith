@@ -1,5 +1,14 @@
 import React, { useContext } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Button, Image } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Button,
+  Image,
+  SafeAreaView,
+} from 'react-native';
 import { useCars } from '../context/CarContext';
 import { ThemeContext } from '../context/ThemeContext';
 export default function CarListScreen({ navigation }) {
@@ -23,34 +32,42 @@ export default function CarListScreen({ navigation }) {
     </TouchableOpacity>
   );
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <FlatList
-        data={cars}
-        keyExtractor={(item) => item.id}
-        renderItem={renderCarItem}
-        ListEmptyComponent={
-          <Text style={{ color: theme.text, textAlign: 'center', marginTop: 20 }}>
-            No cars available. Add some!
-          </Text>
-        }
-      />
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Add New Car"
-          onPress={() => navigation.navigate('AddCar')}
-          color={theme.accent}
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <View style={styles.container}>
+        <FlatList
+          data={cars}
+          keyExtractor={(item) => item.id}
+          renderItem={renderCarItem}
+          ListEmptyComponent={
+            <Text style={{ color: theme.text, textAlign: 'center', marginTop: 20 }}>
+              No cars available. Add some!
+            </Text>
+          }
         />
-        <Button
-          title="Settings"
-          onPress={() => navigation.navigate('Settings')}
-          color={theme.accent}
-        />
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Add New Car"
+            onPress={() => navigation.navigate('AddCar')}
+            color={theme.accent}
+          />
+          <Button
+            title="Settings"
+            onPress={() => navigation.navigate('Settings')}
+            color={theme.accent}
+          />
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
   carItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -82,5 +99,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     flexDirection: 'row',
     justifyContent: 'space-around',
+    paddingBottom: 50, // ensures buttons are not overlapped by nav bar
   },
 });
