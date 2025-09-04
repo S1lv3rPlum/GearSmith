@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "309195851638",
-    "project_id": "gearsmith-e1831",
-    "storage_bucket": "gearsmith-e1831.firebasestorage.app"
+    "project_number": "415427928739",
+    "project_id": "gearsmith-28ed8",
+    "storage_bucket": "gearsmith-28ed8.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:309195851638:android:d97ad933256755cde6dc57",
+        "mobilesdk_app_id": "1:415427928739:android:9da9c20797290c72885516",
         "android_client_info": {
-          "package_name": "com.getdataforge.gearsmith"
+          "package_name": "Com.getdataforge.GearSmith"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBeWHGoz8sKvdI9oSZcP5fj8gT3H82va6Y"
+          "current_key": "AIzaSyBUvkJwQ1f6oznrD_GtDB74iWH21qzdbbM"
         }
       ],
       "services": {
