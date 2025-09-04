@@ -25,7 +25,7 @@ const ACCENT_COLORS = [
 ];
 export default function SettingsScreen() {
   const { theme, toggleThemeMode, accentColor, setAccentColor } = useContext(ThemeContext);
-  const { user, login, logout } = useContext(AuthContext);
+  const { user, login, signup, logout } = useContext(AuthContext);
   const [emailInput, setEmailInput] = useState('');
 const [passwordInput, setPasswordInput] = useState('');
 const [showLoginForm, setShowLoginForm] = useState(false);
