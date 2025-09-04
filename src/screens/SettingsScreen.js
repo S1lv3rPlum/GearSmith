@@ -26,6 +26,9 @@ const ACCENT_COLORS = [
 export default function SettingsScreen() {
   const { theme, toggleThemeMode, accentColor, setAccentColor } = useContext(ThemeContext);
   const { user, login, logout } = useContext(AuthContext);
+  const [emailInput, setEmailInput] = useState('');
+const [passwordInput, setPasswordInput] = useState('');
+const [showLoginForm, setShowLoginForm] = useState(false);
   const [updateStatus, setUpdateStatus] = useState('');
   const checkForUpdates = async () => {
     setUpdateStatus('Checking for updates...');
@@ -57,30 +60,68 @@ export default function SettingsScreen() {
       </View>
       {/* User Profile Section */}
       <View style={styles.section}>
-        <Text style={[styles.heading, { color: theme.text }]}>User Profile</Text>
-        {user ? (
-          <>
-            <Text style={{ color: theme.text, marginBottom: 8 }}>Logged in as: {user.email}</Text>
-            <TouchableOpacity
-              onPress={logout}
-              style={[styles.authButton, { backgroundColor: theme.accent }]}
-              accessibilityRole="button"
-              accessibilityLabel="Logout button"
-            >
-              <Text style={[styles.authButtonText, { color: theme.text }]}>Logout</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
+  <Text style={[styles.heading, { color: theme.text }]}>User Profile</Text>
+  {user ? (
+    <>
+      <Text style={{ color: theme.text, marginBottom: 8 }}>
+        Logged in as: {user.email}
+      </Text>
+      <TouchableOpacity
+        onPress={logout}
+        style={[styles.authButton, { backgroundColor: theme.accent }]}
+        accessibilityRole="button"
+        accessibilityLabel="Logout button"
+      >
+        <Text style={[styles.authButtonText, { color: theme.text }]}>Logout</Text>
+      </TouchableOpacity>
+    </>
+  ) : (
+    <>
+      {!showLoginForm ? (
+        <TouchableOpacity
+          onPress={() => setShowLoginForm(true)}
+          style={[styles.authButton, { backgroundColor: theme.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel="Login button"
+        >
+          <Text style={[styles.authButtonText, { color: theme.text }]}>
+            Login / Sign Up
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <View style={{ marginTop: 10 }}>
+          <TextInput
+            placeholder="Email"
+            value={emailInput}
+            onChangeText={setEmailInput}
+            style={[styles.input, { color: theme.text, borderColor: theme.text }]}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TextInput
+            placeholder="Password"
+            secureTextEntry
+            value={passwordInput}
+            onChangeText={setPasswordInput}
+            style={[styles.input, { color: theme.text, borderColor: theme.text }]}
+          />
           <TouchableOpacity
-            onPress={login}
-            style={[styles.authButton, { backgroundColor: theme.accent }]}
-            accessibilityRole="button"
-            accessibilityLabel="Login button"
+            onPress={() => login(emailInput, passwordInput)}
+            style={[styles.authButton, { backgroundColor: theme.accent, marginBottom: 8 }]}
           >
             <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
           </TouchableOpacity>
-        )}
-      </View>
+          <TouchableOpacity
+            onPress={() => signup(emailInput, passwordInput)}
+            style={[styles.authButton, { backgroundColor: theme.accent }]}
+          >
+            <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </>
+  )}
+</View>
       {/* App Update Section */}
       <View style={styles.section}>
         <Text style={[styles.heading, { color: theme.text }]}>App Updates</Text>
