@@ -84,58 +84,58 @@ export default function SettingsScreen() {
         ) : (
           <>
             {!showLoginForm ? (
-              <TouchableOpacity
-                onPress={() => setShowLoginForm(true)}
-                style={[styles.authButton, { backgroundColor: theme.accent }]}
-                accessibilityRole="button"
-                accessibilityLabel="Login button"
-              >
-                <Text style={[styles.authButtonText, { color: theme.text }]}>
-                  Login / Sign Up
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.loginCard}>
-                <TextInput
-                  placeholder="Email"
-                  placeholderTextColor="#888"
-                  value={emailInput}
-                  onChangeText={setEmailInput}
-                  style={[
-                    styles.input,
-                    { color: theme.text, borderColor: theme.text },
-                  ]}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                <TextInput
-                  placeholder="Password"
-                  placeholderTextColor="#888"
-                  secureTextEntry
-                  value={passwordInput}
-                  onChangeText={setPasswordInput}
-                  style={[
-                    styles.input,
-                    { color: theme.text, borderColor: theme.text },
-                  ]}
-                />
-                <TouchableOpacity
-                  onPress={() => login(emailInput, passwordInput)}
-                  style={[
-                    styles.authButton,
-                    { backgroundColor: theme.accent, marginBottom: 8 },
-                  ]}
-                >
-                  <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => signup(emailInput, passwordInput)}
-                  style={[styles.authButton, { backgroundColor: theme.accent }]}
-                >
-                  <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+  <TouchableOpacity
+    onPress={() => setShowLoginForm(true)}
+    style={styles.loginCard}  // ⬅️ now styled like the card
+    accessibilityRole="button"
+    accessibilityLabel="Open login form"
+  >
+    <Text style={[styles.authButtonText, { color: theme.text, textAlign: 'center' }]}>
+      Login / Sign Up
+    </Text>
+  </TouchableOpacity>
+) : (
+  <View style={styles.loginCard}>
+    <TextInput
+      placeholder="Email"
+      placeholderTextColor="#888"
+      value={emailInput}
+      onChangeText={setEmailInput}
+      style={[
+        styles.input,
+        { color: theme.text, borderColor: theme.text },
+      ]}
+      keyboardType="email-address"
+      autoCapitalize="none"
+    />
+    <TextInput
+      placeholder="Password"
+      placeholderTextColor="#888"
+      secureTextEntry
+      value={passwordInput}
+      onChangeText={setPasswordInput}
+      style={[
+        styles.input,
+        { color: theme.text, borderColor: theme.text },
+      ]}
+    />
+    <TouchableOpacity
+      onPress={() => login(emailInput, passwordInput)}
+      style={[
+        styles.authButton,
+        { backgroundColor: theme.accent, marginBottom: 8 },
+      ]}
+    >
+      <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => signup(emailInput, passwordInput)}
+      style={[styles.authButton, { backgroundColor: theme.accent }]}
+    >
+      <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
+    </TouchableOpacity>
+  </View>
+)}
           </>
         )}
       </View>
