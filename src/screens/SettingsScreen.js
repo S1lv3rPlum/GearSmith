@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  TextInput,   // ⬅️ added so TextInput works
 } from 'react-native';
 import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
 import UpdateChecker from '../services/UpdateChecker';
+
 const ACCENT_COLORS = [
   '#FF6F61',
   '#6B5B95',
@@ -23,13 +25,16 @@ const ACCENT_COLORS = [
   '#DD4124',
   '#45B8AC',
 ];
+
 export default function SettingsScreen() {
   const { theme, toggleThemeMode, accentColor, setAccentColor } = useContext(ThemeContext);
   const { user, login, signup, logout } = useContext(AuthContext);
+
   const [emailInput, setEmailInput] = useState('');
-const [passwordInput, setPasswordInput] = useState('');
-const [showLoginForm, setShowLoginForm] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showLoginForm, setShowLoginForm] = useState(false);
   const [updateStatus, setUpdateStatus] = useState('');
+
   const checkForUpdates = async () => {
     setUpdateStatus('Checking for updates...');
     try {
@@ -46,82 +51,95 @@ const [showLoginForm, setShowLoginForm] = useState(false);
     }
     setTimeout(() => setUpdateStatus(''), 5000);
   };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* GearSmith name and logo placeholder */}
       <View style={styles.gearSmithContainer}>
-        
-       <Image
-  source={require('../../assets/GearSmithLogo.png')}
-  style={styles.profileImage}
-  resizeMode="contain"
-/>
-<Text style={[styles.gearSmithText, { color: theme.text }]}>  GearSmith</Text>
+        <Image
+          source={require('../../assets/GearSmithLogo.png')}
+          style={styles.profileImage}
+          resizeMode="contain"
+        />
+        <Text style={[styles.gearSmithText, { color: theme.text }]}>  GearSmith</Text>
       </View>
+
       {/* User Profile Section */}
       <View style={styles.section}>
-  <Text style={[styles.heading, { color: theme.text }]}>User Profile</Text>
-  {user ? (
-    <>
-      <Text style={{ color: theme.text, marginBottom: 8 }}>
-        Logged in as: {user.email}
-      </Text>
-      <TouchableOpacity
-        onPress={logout}
-        style={[styles.authButton, { backgroundColor: theme.accent }]}
-        accessibilityRole="button"
-        accessibilityLabel="Logout button"
-      >
-        <Text style={[styles.authButtonText, { color: theme.text }]}>Logout</Text>
-      </TouchableOpacity>
-    </>
-  ) : (
-    <>
-      {!showLoginForm ? (
-        <TouchableOpacity
-          onPress={() => setShowLoginForm(true)}
-          style={[styles.authButton, { backgroundColor: theme.accent }]}
-          accessibilityRole="button"
-          accessibilityLabel="Login button"
-        >
-          <Text style={[styles.authButtonText, { color: theme.text }]}>
-            Login / Sign Up
-          </Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={{ marginTop: 10 }}>
-          <TextInput
-            placeholder="Email"
-            value={emailInput}
-            onChangeText={setEmailInput}
-            style={[styles.input, { color: theme.text, borderColor: theme.text }]}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <TextInput
-            placeholder="Password"
-            secureTextEntry
-            value={passwordInput}
-            onChangeText={setPasswordInput}
-            style={[styles.input, { color: theme.text, borderColor: theme.text }]}
-          />
-          <TouchableOpacity
-            onPress={() => login(emailInput, passwordInput)}
-            style={[styles.authButton, { backgroundColor: theme.accent, marginBottom: 8 }]}
-          >
-            <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => signup(emailInput, passwordInput)}
-            style={[styles.authButton, { backgroundColor: theme.accent }]}
-          >
-            <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </>
-  )}
-</View>
+        <Text style={[styles.heading, { color: theme.text }]}>User Profile</Text>
+        {user ? (
+          <>
+            <Text style={{ color: theme.text, marginBottom: 8 }}>
+              Logged in as: {user.email}
+            </Text>
+            <TouchableOpacity
+              onPress={logout}
+              style={[styles.authButton, { backgroundColor: theme.accent }]}
+              accessibilityRole="button"
+              accessibilityLabel="Logout button"
+            >
+              <Text style={[styles.authButtonText, { color: theme.text }]}>Logout</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            {!showLoginForm ? (
+              <TouchableOpacity
+                onPress={() => setShowLoginForm(true)}
+                style={[styles.authButton, { backgroundColor: theme.accent }]}
+                accessibilityRole="button"
+                accessibilityLabel="Login button"
+              >
+                <Text style={[styles.authButtonText, { color: theme.text }]}>
+                  Login / Sign Up
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.loginCard}>
+                <TextInput
+                  placeholder="Email"
+                  placeholderTextColor="#888"
+                  value={emailInput}
+                  onChangeText={setEmailInput}
+                  style={[
+                    styles.input,
+                    { color: theme.text, borderColor: theme.text },
+                  ]}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <TextInput
+                  placeholder="Password"
+                  placeholderTextColor="#888"
+                  secureTextEntry
+                  value={passwordInput}
+                  onChangeText={setPasswordInput}
+                  style={[
+                    styles.input,
+                    { color: theme.text, borderColor: theme.text },
+                  ]}
+                />
+                <TouchableOpacity
+                  onPress={() => login(emailInput, passwordInput)}
+                  style={[
+                    styles.authButton,
+                    { backgroundColor: theme.accent, marginBottom: 8 },
+                  ]}
+                >
+                  <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => signup(emailInput, passwordInput)}
+                  style={[styles.authButton, { backgroundColor: theme.accent }]}
+                >
+                  <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
+        )}
+      </View>
+
       {/* App Update Section */}
       <View style={styles.section}>
         <Text style={[styles.heading, { color: theme.text }]}>App Updates</Text>
@@ -139,6 +157,7 @@ const [showLoginForm, setShowLoginForm] = useState(false);
           <Text style={{ color: theme.text, marginTop: 8 }}>{updateStatus}</Text>
         ) : null}
       </View>
+
       {/* Theme Customization Section */}
       <View style={styles.section}>
         <Text style={[styles.heading, { color: theme.text }]}>Theme</Text>
@@ -170,14 +189,18 @@ const [showLoginForm, setShowLoginForm] = useState(false);
           showsHorizontalScrollIndicator={false}
         />
       </View>
+
       {/* About Section */}
       <View style={styles.section}>
         <Text style={{ color: theme.text }}>App Version: 1.0.0</Text>
-        <Text style={{ color: theme.text }}>Data Forge Apps LLC   *   GetDataForge.com</Text>
+        <Text style={{ color: theme.text }}>
+          Data Forge Apps LLC   *   GetDataForge.com
+        </Text>
       </View>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -241,5 +264,18 @@ const styles = StyleSheet.create({
   updateButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  loginCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginTop: 12,
+  },
+  input: {
+    borderWidth: 1,
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 12,
   },
 });
