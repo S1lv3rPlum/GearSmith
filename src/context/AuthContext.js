@@ -1,11 +1,25 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { auth } from '../services/firebase'; // make sure path is correct
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from 'firebase/auth';
+// Inside your auth context or functions:
+// Sign up new user
+auth.createUserWithEmailAndPassword(email, password)
+  .then(userCredential => { // success: userCredential.user
+  })
+  .catch(error => { // handle error
+  }); // Sign in existing user
+auth.signInWithEmailAndPassword(email, password)
+  .then(userCredential => { // signed in
+  })
+  .catch(error => { // handle error
+  }); // Sign out
+auth.signOut()
+  .then(() => { // signed out
+  });m// Listen to auth state changes
+useEffect(() => {
+  const unsubscribe = auth.onAuthStateChanged(user => { // handle user state change
+  });
+  return () => unsubscribe();
+}, []);
 
 export const AuthContext = createContext();
 
