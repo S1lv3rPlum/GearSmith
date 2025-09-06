@@ -170,7 +170,7 @@ export default function CarDetailScreen({ route, navigation }) {
       console.error(error);
     }
   };
-  const addPhotosToRecord = async (recordId) => {
+ const addPhotosToRecord = async (recordId) => {
   const permissionGranted = await requestPermissions();
   if (!permissionGranted) return;
 
@@ -186,15 +186,11 @@ export default function CarDetailScreen({ route, navigation }) {
       const currentRecord = car.maintenanceRecords.find(r => r.id === recordId);
       if (!currentRecord) return;
 
+      // Merge existing photos with new photos
       const updatedPhotoUris = [...(currentRecord.photoUris || []), ...newUris];
 
-      const updatedRecord = {
-        ...currentRecord,
-        photoUris: updatedPhotoUris,
-        lastModified: Date.now(), // <-- update timestamp here
-      };
-
-      updateMaintenanceRecordPhotos(carId, recordId, updatedRecord.photoUris, updatedRecord.lastModified);
+      // Update via context function (it will also update lastModified)
+      updateMaintenanceRecordPhotos(carId, recordId, updatedPhotoUris);
     }
   } catch (error) {
     Alert.alert('Error', 'Failed to add photos. Please try again.');
