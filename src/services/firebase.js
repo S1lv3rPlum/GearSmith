@@ -3,12 +3,12 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_APP.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_APP.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDc9E-DaEBzabNCqFuMyQ9aRcxmCMDHHgE",
+  authDomain: "gearsmith-e3302.firebaseapp.com",
+  projectId: gearsmith-e3302,
+  storageBucket: gearsmith-e3302.firebasestorage.app,
+  messagingSenderId: "950900631942",
+  appId: "1:950900631942:android:d62b1cd381"
 };
 
 const app = initializeApp(firebaseConfig);
