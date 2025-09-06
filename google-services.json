@@ -1,21 +1,40 @@
 {
   "project_info": {
-    "project_number": "415427928739",
-    "project_id": "gearsmith-28ed8",
-    "storage_bucket": "gearsmith-28ed8.firebasestorage.app"
+    "project_number": "950900631942",
+    "project_id": "gearsmith-e3302",
+    "storage_bucket": "gearsmith-e3302.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:415427928739:android:9da9c20797290c72885516",
+        "mobilesdk_app_id": "1:950900631942:android:ef77e0a2fd93f8956e2407",
         "android_client_info": {
-          "package_name": "Com.getdataforge.GearSmith"
+          "package_name": "Com.GetDataForge.GearSmith"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBUvkJwQ1f6oznrD_GtDB74iWH21qzdbbM"
+          "current_key": "AIzaSyDc9E-DaEBzabNCqFuMyQ9aRcxmCMDHHgE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:950900631942:android:d62b1cd3819b03026e2407",
+        "android_client_info": {
+          "package_name": "com.getdataforge.GearSmith"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDc9E-DaEBzabNCqFuMyQ9aRcxmCMDHHgE"
         }
       ],
       "services": {
