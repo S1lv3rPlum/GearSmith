@@ -1,117 +1,172 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import { auth, db } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const CarContext = createContext();
 
-const STORAGE_KEY = 'car_data';
-
-// Default demo data
-const initialCars = [
-  {
-    id: '1',
-    make: 'DEMO-Ford',
-    model: 'Mustang',
-    year: 1967,
-    photoUri: null,
-    maintenanceRecords: [
-      {
-        id: 'm1',
-        type: 'Oil Change',
-        date: '2024-05-15',
-        mileage: 12000,
-        notes: 'Changed oil and filter',
-        photoUris: [],
-      },
-    ],
-  },
-];
-
 export const CarProvider = ({ children }) => {
-  const [cars, setCars] = useState(initialCars);
-  const [loading, setLoading] = useState(true);
+  const [cars, setCars] = useState([]);
+  const [deletedIds, setDeletedIds] = useState({ cars: [], records: [] });
+  const [user, setUser] = useState(null);
+  const [isConnected, setIsConnected] = useState(true);
 
-  // Load data from local storage on startup
+  // Load local data on start
   useEffect(() => {
-    const loadCars = async () => {
-      try {
-        const storedCars = await AsyncStorage.getItem(STORAGE_KEY);
-        if (storedCars) {
-          setCars(JSON.parse(storedCars));
-        }
-      } catch (error) {
-        console.error('Error loading car data:', error);
-      } finally {
-        setLoading(false);
-      }
+    const loadLocalData = async () => {
+      const localData = await AsyncStorage.getItem('cars');
+      if (localData) setCars(JSON.parse(localData));
+      const deletedData = await AsyncStorage.getItem('deletedIds');
+      if (deletedData) setDeletedIds(JSON.parse(deletedData));
     };
-    loadCars();
+    loadLocalData();
   }, []);
 
-  // Save data to local storage whenever cars change
+  // Save local data whenever cars or deletedIds change
   useEffect(() => {
-    const saveCars = async () => {
-      try {
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(cars));
-      } catch (error) {
-        console.error('Error saving car data:', error);
-      }
-    };
-    if (!loading) {
-      saveCars();
+    AsyncStorage.setItem('cars', JSON.stringify(cars));
+    AsyncStorage.setItem('deletedIds', JSON.stringify(deletedIds));
+    if (user && isConnected) {
+      mergeWithCloud(cars, deletedIds, user.uid);
     }
-  }, [cars, loading]);
+  }, [cars, deletedIds, user, isConnected]);
 
-  // ===== CRUD FUNCTIONS =====
+  // Detect network status
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsConnected(state.isConnected);
+      if (state.isConnected && user) {
+        mergeWithCloud(cars, deletedIds, user.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, [user, cars, deletedIds]);
+
+  // Firebase auth listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser && isConnected) {
+        mergeWithCloud(cars, deletedIds, firebaseUser.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, [isConnected]);
+
+  // Merge local and cloud data with edits and deletes
+  const mergeWithCloud = async (localCars, deleted, uid) => {
+    if (!uid) return;
+    try {
+      const docRef = doc(db, 'users', uid);
+      const docSnap = await getDoc(docRef);
+      let cloudCars = docSnap.exists() ? docSnap.data().cars || [] : [];
+
+      // Remove deleted items
+      cloudCars = cloudCars.filter(car => !deleted.cars.includes(car.id));
+      cloudCars.forEach(car => {
+        if (car.maintenanceRecords) {
+          car.maintenanceRecords = car.maintenanceRecords.filter(
+            r => !deleted.records.includes(r.id)
+          );
+        }
+      });
+
+      // Merge cars
+      const mergedCarsMap = {};
+      cloudCars.forEach(car => mergedCarsMap[car.id] = car);
+      localCars.forEach(localCar => {
+        if (!mergedCarsMap[localCar.id]) {
+          mergedCarsMap[localCar.id] = localCar;
+        } else {
+          // Choose latest modified for car
+          if ((localCar.lastModified || 0) > (mergedCarsMap[localCar.id].lastModified || 0)) {
+            mergedCarsMap[localCar.id] = { ...localCar };
+          }
+          // Merge maintenance records
+          const cloudRecords = mergedCarsMap[localCar.id].maintenanceRecords || [];
+          const localRecords = localCar.maintenanceRecords || [];
+          const recordsMap = {};
+          cloudRecords.forEach(r => recordsMap[r.id] = r);
+          localRecords.forEach(r => {
+            if (!recordsMap[r.id] || (r.lastModified || 0) > (recordsMap[r.id].lastModified || 0)) {
+              recordsMap[r.id] = r;
+            }
+          });
+          mergedCarsMap[localCar.id].maintenanceRecords = Object.values(recordsMap);
+        }
+      });
+
+      const mergedCars = Object.values(mergedCarsMap);
+
+      // Update local and cloud
+      setCars(mergedCars);
+      await setDoc(docRef, { cars: mergedCars });
+      await AsyncStorage.setItem('cars', JSON.stringify(mergedCars));
+
+      // Clear deleted IDs after successful sync
+      setDeletedIds({ cars: [], records: [] });
+      await AsyncStorage.removeItem('deletedIds');
+
+    } catch (err) {
+      console.warn('Merge with cloud failed:', err);
+    }
+  };
+
+  // CRUD functions
   const addCar = (newCar) => {
-    setCars((currentCars) => [...currentCars, newCar]);
+    const carWithTimestamp = { ...newCar, lastModified: Date.now() };
+    setCars(c => [...c, carWithTimestamp]);
+  };
+
+  const updateCar = (carId, updatedFields) => {
+    setCars(cars.map(car =>
+      car.id === carId ? { ...car, ...updatedFields, lastModified: Date.now() } : car
+    ));
+  };
+
+  const deleteCar = (carId) => {
+    setCars(cars.filter(car => car.id !== carId));
+    setDeletedIds(prev => ({ ...prev, cars: [...prev.cars, carId] }));
   };
 
   const addMaintenanceRecord = (carId, record) => {
-    setCars((currentCars) =>
-      currentCars.map((car) =>
+    const recordWithTimestamp = { ...record, lastModified: Date.now() };
+    setCars(currentCars =>
+      currentCars.map(car =>
         car.id === carId
-          ? { ...car, maintenanceRecords: [...car.maintenanceRecords, record] }
+          ? { ...car, maintenanceRecords: [...car.maintenanceRecords, recordWithTimestamp] }
           : car
       )
     );
   };
 
-  const updateMaintenanceRecordPhotos = (carId, recordId, newPhotoUris) => {
-    setCars((currentCars) =>
-      currentCars.map((car) => {
+  const updateMaintenanceRecord = (carId, recordId, updatedFields) => {
+    setCars(currentCars =>
+      currentCars.map(car => {
         if (car.id !== carId) return car;
         return {
           ...car,
-          maintenanceRecords: car.maintenanceRecords.map((record) =>
-            record.id === recordId
-              ? { ...record, photoUris: newPhotoUris }
-              : record
+          maintenanceRecords: car.maintenanceRecords.map(record =>
+            record.id === recordId ? { ...record, ...updatedFields, lastModified: Date.now() } : record
           ),
         };
       })
     );
   };
 
-  const updateCarPhoto = (carId, photoUri) => {
-    setCars((currentCars) =>
-      currentCars.map((car) =>
-        car.id === carId ? { ...car, photoUri } : car
-      )
+  const deleteMaintenanceRecord = (carId, recordId) => {
+    setCars(currentCars =>
+      currentCars.map(car => {
+        if (car.id !== carId) return car;
+        return {
+          ...car,
+          maintenanceRecords: car.maintenanceRecords.filter(r => r.id !== recordId),
+        };
+      })
     );
-  };
-
-  // ===== CLOUD SYNC PLACEHOLDER =====
-  const syncToCloud = async (userId) => {
-    // Example stub: Replace with Firebase/Supabase API call
-    console.log(`Syncing ${cars.length} cars to cloud for user: ${userId}`);
-    // await api.saveCars(userId, cars);
-  };
-
-  const loadFromCloud = async (userId) => {
-    // Example stub: Replace with Firebase/Supabase API call
-    console.log(`Loading cars from cloud for user: ${userId}`);
-    // const cloudCars = await api.getCars(userId);
-    // if (cloudCars) setCars(cloudCars);
+    setDeletedIds(prev => ({ ...prev, records: [...prev.records, recordId] }));
   };
 
   return (
@@ -119,12 +174,12 @@ export const CarProvider = ({ children }) => {
       value={{
         cars,
         addCar,
+        updateCar,
+        deleteCar,
         addMaintenanceRecord,
-        updateMaintenanceRecordPhotos,
-        updateCarPhoto,
-        syncToCloud,
-        loadFromCloud,
-        loading,
+        updateMaintenanceRecord,
+        deleteMaintenanceRecord,
+        user,
       }}
     >
       {children}
