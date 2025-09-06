@@ -87,46 +87,46 @@ export default function AddCarScreen({ route, navigation }) {
   };
   // Form validation and submit handler
   const validateAndSubmit = () => {
-    if (!make.trim()) {
-      Alert.alert('Validation error', 'Please enter the car make.');
-      return;
-    }
-    if (!model.trim()) {
-      Alert.alert('Validation error', 'Please enter the car model.');
-      return;
-    }
-    const parsedYear = Number(year);
-    const currentYear = new Date().getFullYear();
-    if (
-      !year.trim() ||
-      isNaN(parsedYear) ||
-      parsedYear < 1886 ||
-      parsedYear > currentYear + 1
-    ) {
-      Alert.alert('Validation error', 'Please enter a valid year.');
-      return;
-    }
-    const carData = {
-      id: carToEdit?.id || Date.now().toString(),
-      make: make.trim(),
-      model: model.trim(),
-      year: parsedYear,
-      nickname: nickname.trim() || null,
-      photoUri: photoUri || null,
-      maintenanceRecords: carToEdit?.maintenanceRecords || [],
-    };
-    if (carToEdit) {
-      updateCar(carData);
-    } else {
-      addCar(carData);
-    }
-    setMake('');
-    setModel('');
-    setYear('');
-    setNickname('');
-    setPhotoUri(null);
-    navigation.goBack();
+  if (!make.trim()) {
+    Alert.alert('Validation error', 'Please enter the car make.');
+    return;
+  }
+  if (!model.trim()) {
+    Alert.alert('Validation error', 'Please enter the car model.');
+    return;
+  }
+  const parsedYear = Number(year);
+  const currentYear = new Date().getFullYear();
+  if (!year.trim() || isNaN(parsedYear) || parsedYear < 1886 || parsedYear > currentYear + 1) {
+    Alert.alert('Validation error', 'Please enter a valid year.');
+    return;
+  }
+
+  const carData = {
+    id: carToEdit?.id || Date.now().toString(),
+    make: make.trim(),
+    model: model.trim(),
+    year: parsedYear,
+    nickname: nickname.trim() || null,
+    photoUri: photoUri || null,
+    maintenanceRecords: carToEdit?.maintenanceRecords || [],
+    lastModified: Date.now(), // <-- added for hybrid sync
   };
+
+  if (carToEdit) {
+    updateCar(carData);
+  } else {
+    addCar(carData);
+  }
+
+  setMake('');
+  setModel('');
+  setYear('');
+  setNickname('');
+  setPhotoUri(null);
+
+  navigation.goBack();
+};
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <KeyboardAvoidingView
