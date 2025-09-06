@@ -1,6 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from '../services/firebase';
 
 const CarContext = createContext();
@@ -43,15 +45,15 @@ export const CarProvider = ({ children }) => {
   }, [user, cars, deletedIds]);
 
   // Firebase auth listener
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser && isConnected) {
-        mergeWithCloud(cars, deletedIds, firebaseUser.uid);
-      }
-    });
-    return () => unsubscribe();
-  }, [isConnected]);
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    setUser(firebaseUser);
+    if (firebaseUser && isConnected) {
+      mergeWithCloud(cars, deletedIds, firebaseUser.uid);
+    }
+  });
+  return () => unsubscribe();
+}, [isConnected]);
 
   // Merge local and cloud data with edits and deletes
   const mergeWithCloud = async (localCars, deleted, uid) => {
