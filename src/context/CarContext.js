@@ -120,11 +120,13 @@ export const CarProvider = ({ children }) => {
     setCars(c => [...c, carWithTimestamp]);
   };
 
-  const updateCar = (carId, updatedFields) => {
-    setCars(cars.map(car =>
-      car.id === carId ? { ...car, ...updatedFields, lastModified: Date.now() } : car
-    ));
-  };
+ const updateCar = (updatedCar) => {
+  setCars(cars.map(car =>
+    car.id === updatedCar.id
+      ? { ...updatedCar, lastModified: Date.now() }
+      : car
+  ));
+};
 
   const deleteCar = (carId) => {
     setCars(cars.filter(car => car.id !== carId));
