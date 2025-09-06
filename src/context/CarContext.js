@@ -157,6 +157,22 @@ export const CarProvider = ({ children }) => {
       })
     );
   };
+const updateMaintenanceRecordPhotos = (carId, recordId, photoUris) => {
+  setCars(currentCars =>
+    currentCars.map(car => {
+      if (car.id !== carId) return car;
+      return {
+        ...car,
+        maintenanceRecords: car.maintenanceRecords.map(record =>
+          record.id === recordId
+            ? { ...record, photoUris, lastModified: Date.now() }
+            : record
+        ),
+      };
+    })
+  );
+};
+
 
   const deleteMaintenanceRecord = (carId, recordId) => {
     setCars(currentCars =>
@@ -181,6 +197,7 @@ export const CarProvider = ({ children }) => {
         addMaintenanceRecord,
         updateMaintenanceRecord,
         deleteMaintenanceRecord,
+        updateMaintenanceRecordPhotos,
         user,
       }}
     >
