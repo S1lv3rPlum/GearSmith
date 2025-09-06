@@ -171,25 +171,36 @@ export default function CarDetailScreen({ route, navigation }) {
     }
   };
   const addPhotosToRecord = async (recordId) => {
-    const permissionGranted = await requestPermissions();
-    if (!permissionGranted) return;
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsMultipleSelection: true,
-        quality: 0.7,
-      });
-      if (!result.canceled) {
-        const newUris = result.assets?.map(asset => asset.uri) || [result.uri];
-        const currentRecord = car.maintenanceRecords.find(r => r.id === recordId);
-        const updatedPhotoUris = [...(currentRecord?.photoUris || []), ...newUris];
-        updateMaintenanceRecordPhotos(carId, recordId, updatedPhotoUris);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to add photos. Please try again.');
-      console.error(error);
+  const permissionGranted = await requestPermissions();
+  if (!permissionGranted) return;
+
+  try {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      const newUris = result.assets?.map(asset => asset.uri) || [result.uri];
+      const currentRecord = car.maintenanceRecords.find(r => r.id === recordId);
+      if (!currentRecord) return;
+
+      const updatedPhotoUris = [...(currentRecord.photoUris || []), ...newUris];
+
+      const updatedRecord = {
+        ...currentRecord,
+        photoUris: updatedPhotoUris,
+        lastModified: Date.now(), // <-- update timestamp here
+      };
+
+      updateMaintenanceRecordPhotos(carId, recordId, updatedRecord.photoUris, updatedRecord.lastModified);
     }
-  };
+  } catch (error) {
+    Alert.alert('Error', 'Failed to add photos. Please try again.');
+    console.error(error);
+  }
+};
   const renderRecordItem = ({ item }) => (
     <View style={[styles.recordItem, { borderBottomColor: theme.accent }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
