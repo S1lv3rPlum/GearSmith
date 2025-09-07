@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   StyleSheet,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
@@ -27,11 +28,20 @@ const ACCENT_COLORS = [
 ];
 export default function SettingsScreen() {
   const { theme, toggleThemeMode, accentColor, setAccentColor } = useContext(ThemeContext);
-  const { user, login, signup, logout } = useContext(AuthContext);
+  const { user, login, signup, logout, authError } = useContext(AuthContext);
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [updateStatus, setUpdateStatus] = useState('');
+  const [loading, setLoading] = useState(false);
+  // Clear inputs and login form when user logs in or out
+  useEffect(() => {
+    if (user) {
+      setEmailInput('');
+      setPasswordInput('');
+      setShowLoginForm(false);
+    }
+  }, [user]);
   const checkForUpdates = async () => {
     setUpdateStatus('Checking for updates...');
     try {
@@ -49,23 +59,25 @@ export default function SettingsScreen() {
     setTimeout(() => setUpdateStatus(''), 5000);
   };
   const handleLogin = async () => {
+    setLoading(true);
     try {
       await login(emailInput.trim(), passwordInput);
-      setEmailInput('');
-      setPasswordInput('');
-      setShowLoginForm(false);
+      Alert.alert('Success', 'Logged in successfully!');
     } catch (error) {
       Alert.alert('Login failed', error.message);
+    } finally {
+      setLoading(false);
     }
   };
   const handleSignup = async () => {
+    setLoading(true);
     try {
       await signup(emailInput.trim(), passwordInput);
-      setEmailInput('');
-      setPasswordInput('');
-      setShowLoginForm(false);
+      Alert.alert('Success', 'Account created successfully!');
     } catch (error) {
       Alert.alert('Sign Up failed', error.message);
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -84,9 +96,7 @@ export default function SettingsScreen() {
         <Text style={[styles.heading, { color: theme.text }]}>User Profile</Text>
         {user ? (
           <>
-            <Text style={{ color: theme.text, marginBottom: 8 }}>
-              Logged in as: {user.email}
-            </Text>
+            <Text style={{ color: theme.text, marginBottom: 8 }}>Logged in as: {user.email}</Text>
             <TouchableOpacity
               onPress={logout}
               style={[styles.authButton, { backgroundColor: theme.accent }]}
@@ -117,6 +127,7 @@ export default function SettingsScreen() {
               style={[styles.input, { color: theme.text, borderColor: theme.text }]}
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!loading}
             />
             <TextInput
               placeholder="Password"
@@ -125,20 +136,24 @@ export default function SettingsScreen() {
               value={passwordInput}
               onChangeText={setPasswordInput}
               style={[styles.input, { color: theme.text, borderColor: theme.text }]}
+              editable={!loading}
             />
+            {loading && <ActivityIndicator size="small" color={theme.accent} />}
             <TouchableOpacity
               onPress={handleLogin}
-              style={[styles.authButton, { backgroundColor: theme.accent, marginBottom: 8 }]}
+              style={[styles.authButton, { backgroundColor: theme.accent, marginBottom: 8, opacity: loading ? 0.6 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel="Login button"
+              disabled={loading}
             >
               <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSignup}
-              style={[styles.authButton, { backgroundColor: theme.accent }]}
+              style={[styles.authButton, { backgroundColor: theme.accent, opacity: loading ? 0.6 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel="Sign Up button"
+              disabled={loading}
             >
               <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
             </TouchableOpacity>
@@ -147,9 +162,14 @@ export default function SettingsScreen() {
               style={{ marginTop: 12, alignItems: 'center' }}
               accessibilityRole="button"
               accessibilityLabel="Cancel login form"
+              disabled={loading}
             >
               <Text style={{ color: theme.accent }}>Cancel</Text>
             </TouchableOpacity>
+            {/* Optionally display authError if your AuthContext provides it */}
+            {authError ? (
+              <Text style={{ color: 'red', marginTop: 8, textAlign: 'center' }}>{authError}</Text>
+            ) : null}
           </View>
         )}
       </View>
@@ -162,9 +182,7 @@ export default function SettingsScreen() {
           accessibilityRole="button"
           accessibilityLabel="Check for app updates"
         >
-          <Text style={[styles.updateButtonText, { color: theme.text }]}>
-            Check for App Updates
-          </Text>
+          <Text style={[styles.updateButtonText, { color: theme.text }]}>Check for App Updates</Text>
         </TouchableOpacity>
         {updateStatus ? (
           <Text style={{ color: theme.text, marginTop: 8 }}>{updateStatus}</Text>
@@ -189,10 +207,7 @@ export default function SettingsScreen() {
               style={[
                 styles.colorCircle,
                 { backgroundColor: item },
-                item === accentColor && {
-                  borderColor: theme.accent,
-                  borderWidth: 3,
-                },
+                item === accentColor && { borderColor: theme.accent, borderWidth: 3 },
               ]}
               onPress={() => setAccentColor(item)}
             />
