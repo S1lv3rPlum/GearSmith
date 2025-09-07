@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
-  TextInput,   // ⬅️ added so TextInput works
+  TextInput,
+  Alert,
 } from 'react-native';
 import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
 import UpdateChecker from '../services/UpdateChecker';
-
 const ACCENT_COLORS = [
   '#FF6F61',
   '#6B5B95',
@@ -25,16 +25,13 @@ const ACCENT_COLORS = [
   '#DD4124',
   '#45B8AC',
 ];
-
 export default function SettingsScreen() {
   const { theme, toggleThemeMode, accentColor, setAccentColor } = useContext(ThemeContext);
   const { user, login, signup, logout } = useContext(AuthContext);
-
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [updateStatus, setUpdateStatus] = useState('');
-
   const checkForUpdates = async () => {
     setUpdateStatus('Checking for updates...');
     try {
@@ -51,19 +48,37 @@ export default function SettingsScreen() {
     }
     setTimeout(() => setUpdateStatus(''), 5000);
   };
-
+  const handleLogin = async () => {
+    try {
+      await login(emailInput.trim(), passwordInput);
+      setEmailInput('');
+      setPasswordInput('');
+      setShowLoginForm(false);
+    } catch (error) {
+      Alert.alert('Login failed', error.message);
+    }
+  };
+  const handleSignup = async () => {
+    try {
+      await signup(emailInput.trim(), passwordInput);
+      setEmailInput('');
+      setPasswordInput('');
+      setShowLoginForm(false);
+    } catch (error) {
+      Alert.alert('Sign Up failed', error.message);
+    }
+  };
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* GearSmith name and logo placeholder */}
+      {/* GearSmith name and logo */}
       <View style={styles.gearSmithContainer}>
         <Image
           source={require('../../assets/GearSmithLogo.png')}
           style={styles.profileImage}
           resizeMode="contain"
         />
-        <Text style={[styles.gearSmithText, { color: theme.text }]}>  GearSmith</Text>
+        <Text style={[styles.gearSmithText, { color: theme.text }]}>GearSmith</Text>
       </View>
-
       {/* User Profile Section */}
       <View style={styles.section}>
         <Text style={[styles.heading, { color: theme.text }]}>User Profile</Text>
@@ -81,65 +96,63 @@ export default function SettingsScreen() {
               <Text style={[styles.authButtonText, { color: theme.text }]}>Logout</Text>
             </TouchableOpacity>
           </>
+        ) : !showLoginForm ? (
+          <TouchableOpacity
+            onPress={() => setShowLoginForm(true)}
+            style={styles.loginCard}
+            accessibilityRole="button"
+            accessibilityLabel="Open login form"
+          >
+            <Text style={[styles.authButtonText, { color: theme.text, textAlign: 'center' }]}>
+              Login / Sign Up
+            </Text>
+          </TouchableOpacity>
         ) : (
-          <>
-            {!showLoginForm ? (
-  <TouchableOpacity
-    onPress={() => setShowLoginForm(true)}
-    style={styles.loginCard}  // ⬅️ now styled like the card
-    accessibilityRole="button"
-    accessibilityLabel="Open login form"
-  >
-    <Text style={[styles.authButtonText, { color: theme.text, textAlign: 'center' }]}>
-      Login / Sign Up
-    </Text>
-  </TouchableOpacity>
-) : (
-  <View style={styles.loginCard}>
-    <TextInput
-      placeholder="Email"
-      placeholderTextColor="#888"
-      value={emailInput}
-      onChangeText={setEmailInput}
-      style={[
-        styles.input,
-        { color: theme.text, borderColor: theme.text },
-      ]}
-      keyboardType="email-address"
-      autoCapitalize="none"
-    />
-    <TextInput
-      placeholder="Password"
-      placeholderTextColor="#888"
-      secureTextEntry
-      value={passwordInput}
-      onChangeText={setPasswordInput}
-      style={[
-        styles.input,
-        { color: theme.text, borderColor: theme.text },
-      ]}
-    />
-    <TouchableOpacity
-      onPress={() => login(emailInput, passwordInput)}
-      style={[
-        styles.authButton,
-        { backgroundColor: theme.accent, marginBottom: 8 },
-      ]}
-    >
-      <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => signup(emailInput, passwordInput)}
-      style={[styles.authButton, { backgroundColor: theme.accent }]}
-    >
-      <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
-    </TouchableOpacity>
-  </View>
-)}
-          </>
+          <View style={styles.loginCard}>
+            <TextInput
+              placeholder="Email"
+              placeholderTextColor="#888"
+              value={emailInput}
+              onChangeText={setEmailInput}
+              style={[styles.input, { color: theme.text, borderColor: theme.text }]}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TextInput
+              placeholder="Password"
+              placeholderTextColor="#888"
+              secureTextEntry
+              value={passwordInput}
+              onChangeText={setPasswordInput}
+              style={[styles.input, { color: theme.text, borderColor: theme.text }]}
+            />
+            <TouchableOpacity
+              onPress={handleLogin}
+              style={[styles.authButton, { backgroundColor: theme.accent, marginBottom: 8 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Login button"
+            >
+              <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleSignup}
+              style={[styles.authButton, { backgroundColor: theme.accent }]}
+              accessibilityRole="button"
+              accessibilityLabel="Sign Up button"
+            >
+              <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowLoginForm(false)}
+              style={{ marginTop: 12, alignItems: 'center' }}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel login form"
+            >
+              <Text style={{ color: theme.accent }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
-
       {/* App Update Section */}
       <View style={styles.section}>
         <Text style={[styles.heading, { color: theme.text }]}>App Updates</Text>
@@ -157,7 +170,6 @@ export default function SettingsScreen() {
           <Text style={{ color: theme.text, marginTop: 8 }}>{updateStatus}</Text>
         ) : null}
       </View>
-
       {/* Theme Customization Section */}
       <View style={styles.section}>
         <Text style={[styles.heading, { color: theme.text }]}>Theme</Text>
@@ -189,52 +201,21 @@ export default function SettingsScreen() {
           showsHorizontalScrollIndicator={false}
         />
       </View>
-
       {/* About Section */}
       <View style={styles.section}>
-        <Text style={{ color: theme.text }}>App Version: 1.0.0</Text>
-        <Text style={{ color: theme.text }}>
-          Data Forge Apps LLC   *   GetDataForge.com
-        </Text>
+        <Text style={{ color: theme.text }}>Data Forge Apps LLC   *   GetDataForge.com</Text>
       </View>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  gearSmithContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  gearSmithText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginRight: 12,
-  },
-  profileImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#ccc',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+  container: { flex: 1, padding: 16 },
+  gearSmithContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  gearSmithText: { fontSize: 28, fontWeight: 'bold', marginLeft: 8 },
+  profileImage: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#ccc' },
+  section: { marginBottom: 24 },
+  heading: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   colorCircle: {
     height: 36,
     width: 36,
@@ -250,10 +231,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     minWidth: 100,
   },
-  authButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  authButtonText: { fontSize: 16, fontWeight: '600' },
   updateButton: {
     paddingVertical: 12,
     borderRadius: 6,
@@ -261,10 +239,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     minWidth: 150,
   },
-  updateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  updateButtonText: { fontSize: 16, fontWeight: '600' },
   loginCard: {
     padding: 16,
     borderRadius: 12,
