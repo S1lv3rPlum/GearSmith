@@ -5,42 +5,51 @@ import {
   createUserWithEmailAndPassword,
   signOut
 } from 'firebase/auth';
-import { auth } from '../services/firebase'; // make sure path is correct
-// Sign up new user
-// (These lines you had outside React were likely accidental; ideally, remove or move them into functions)
+import { auth } from '../services/firebase';
 export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  // Listen to auth state changes
+  const [authError, setAuthError] = useState(null);
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
     });
     return () => unsubscribe();
   }, []);
   const login = async (email, password) => {
+    setAuthError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      setUser(userCredential.user);
+      return userCredential.user;
     } catch (err) {
-      alert(err.message);
+      setAuthError(err.message);
+      throw err;  // Let UI handle showing error message
     }
   };
   const signup = async (email, password) => {
+    setAuthError(null);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      setUser(userCredential.user);
+      return userCredential.user;
     } catch (err) {
-      alert(err.message);
+      setAuthError(err.message);
+      throw err;  // Let UI handle showing error message
     }
   };
   const logout = async () => {
+    setAuthError(null);
     try {
       await signOut(auth);
+      setUser(null);
     } catch (err) {
-      alert(err.message);
+      setAuthError(err.message);
+      throw err;
     }
   };
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, authError, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );
