@@ -2,9 +2,9 @@
   "expo": {
     "name": "GearSmith",
     "slug": "snack-b1ed90bd-53bf-46df-bc6f-f37db514ca75",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon.png",           // Main app launcher icon
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -13,9 +13,9 @@
       "backgroundColor": "#ffffff"
     },
     "android": {
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/gearsmithfavicon.jpg",
+        "foregroundImage": "./assets/adaptive-icon.png",  // Adaptive icon foreground (PNG)
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -29,7 +29,7 @@
       }
     },
     "web": {
-      "favicon": "./assets/gearsmithfavicon.jpg"
+      "favicon": "./assets/favicon.png"   // Web favicon PNG (small icon for browser tabs)
     },
     "extra": {
       "eas": {

@@ -90,21 +90,24 @@ export default function AddMaintenanceScreen({ route, navigation }) {
     setPhotoUris((prev) => prev.filter((_, i) => i !== index));
   };
   const onSubmit = () => {
-    if (!type.trim() || !date.trim()) {
-      Alert.alert('Validation error', 'Please enter maintenance type and date.');
-      return;
-    }
-    const newRecord = {
-      id: Date.now().toString(),
-      type: type.trim(),
-      date: date.trim(),
-      mileage: Number(mileage) || 0,
-      notes: notes.trim(),
-      photoUris,
-    };
-    addMaintenanceRecord(carId, newRecord);
-    navigation.goBack();
+  if (!type.trim() || !date.trim()) {
+    Alert.alert('Validation error', 'Please enter maintenance type and date.');
+    return;
+  }
+
+  const newRecord = {
+    id: Date.now().toString(), // unique ID
+    type: type.trim(),
+    date: date.trim(),
+    mileage: Number(mileage) || 0,
+    notes: notes.trim(),
+    photoUris,
+    lastModified: Date.now(), // <-- added timestamp for hybrid sync
   };
+
+  addMaintenanceRecord(carId, newRecord);
+  navigation.goBack();
+};
   const renderImageItem = ({ item, index }) => (
     <View style={styles.imageWrapper}>
       <Image source={{ uri: item }} style={styles.imagePreview} />

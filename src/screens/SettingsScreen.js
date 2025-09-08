@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  TextInput,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
@@ -25,8 +28,20 @@ const ACCENT_COLORS = [
 ];
 export default function SettingsScreen() {
   const { theme, toggleThemeMode, accentColor, setAccentColor } = useContext(ThemeContext);
-  const { user, login, logout } = useContext(AuthContext);
+  const { user, login, signup, logout, authError } = useContext(AuthContext);
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showLoginForm, setShowLoginForm] = useState(false);
   const [updateStatus, setUpdateStatus] = useState('');
+  const [loading, setLoading] = useState(false);
+  // Clear inputs and login form when user logs in or out
+  useEffect(() => {
+    if (user) {
+      setEmailInput('');
+      setPasswordInput('');
+      setShowLoginForm(false);
+    }
+  }, [user]);
   const checkForUpdates = async () => {
     setUpdateStatus('Checking for updates...');
     try {
@@ -43,17 +58,38 @@ export default function SettingsScreen() {
     }
     setTimeout(() => setUpdateStatus(''), 5000);
   };
+  const handleLogin = async () => {
+    setLoading(true);
+    try {
+      await login(emailInput.trim(), passwordInput);
+      Alert.alert('Success', 'Logged in successfully!');
+    } catch (error) {
+      Alert.alert('Login failed', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleSignup = async () => {
+    setLoading(true);
+    try {
+      await signup(emailInput.trim(), passwordInput);
+      Alert.alert('Success', 'Account created successfully!');
+    } catch (error) {
+      Alert.alert('Sign Up failed', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* GearSmith name and logo placeholder */}
+      {/* GearSmith name and logo */}
       <View style={styles.gearSmithContainer}>
-        
-       <Image
-  source={require('../../assets/GearSmithLogo.png')}
-  style={styles.profileImage}
-  resizeMode="contain"
-/>
-<Text style={[styles.gearSmithText, { color: theme.text }]}>  GearSmith</Text>
+        <Image
+          source={require('../../assets/GearSmithLogo.png')}
+          style={styles.profileImage}
+          resizeMode="contain"
+        />
+        <Text style={[styles.gearSmithText, { color: theme.text }]}>GearSmith</Text>
       </View>
       {/* User Profile Section */}
       <View style={styles.section}>
@@ -70,15 +106,71 @@ export default function SettingsScreen() {
               <Text style={[styles.authButtonText, { color: theme.text }]}>Logout</Text>
             </TouchableOpacity>
           </>
-        ) : (
+        ) : !showLoginForm ? (
           <TouchableOpacity
-            onPress={login}
-            style={[styles.authButton, { backgroundColor: theme.accent }]}
+            onPress={() => setShowLoginForm(true)}
+            style={styles.loginCard}
             accessibilityRole="button"
-            accessibilityLabel="Login button"
+            accessibilityLabel="Open login form"
           >
-            <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
+            <Text style={[styles.authButtonText, { color: theme.text, textAlign: 'center' }]}>
+              Login / Sign Up
+            </Text>
           </TouchableOpacity>
+        ) : (
+          <View style={styles.loginCard}>
+            <TextInput
+              placeholder="Email"
+              placeholderTextColor="#888"
+              value={emailInput}
+              onChangeText={setEmailInput}
+              style={[styles.input, { color: theme.text, borderColor: theme.text }]}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              editable={!loading}
+            />
+            <TextInput
+              placeholder="Password"
+              placeholderTextColor="#888"
+              secureTextEntry
+              value={passwordInput}
+              onChangeText={setPasswordInput}
+              style={[styles.input, { color: theme.text, borderColor: theme.text }]}
+              editable={!loading}
+            />
+            {loading && <ActivityIndicator size="small" color={theme.accent} />}
+            <TouchableOpacity
+              onPress={handleLogin}
+              style={[styles.authButton, { backgroundColor: theme.accent, marginBottom: 8, opacity: loading ? 0.6 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Login button"
+              disabled={loading}
+            >
+              <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleSignup}
+              style={[styles.authButton, { backgroundColor: theme.accent, opacity: loading ? 0.6 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Sign Up button"
+              disabled={loading}
+            >
+              <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowLoginForm(false)}
+              style={{ marginTop: 12, alignItems: 'center' }}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel login form"
+              disabled={loading}
+            >
+              <Text style={{ color: theme.accent }}>Cancel</Text>
+            </TouchableOpacity>
+            {/* Optionally display authError if your AuthContext provides it */}
+            {authError ? (
+              <Text style={{ color: 'red', marginTop: 8, textAlign: 'center' }}>{authError}</Text>
+            ) : null}
+          </View>
         )}
       </View>
       {/* App Update Section */}
@@ -90,9 +182,7 @@ export default function SettingsScreen() {
           accessibilityRole="button"
           accessibilityLabel="Check for app updates"
         >
-          <Text style={[styles.updateButtonText, { color: theme.text }]}>
-            Check for App Updates
-          </Text>
+          <Text style={[styles.updateButtonText, { color: theme.text }]}>Check for App Updates</Text>
         </TouchableOpacity>
         {updateStatus ? (
           <Text style={{ color: theme.text, marginTop: 8 }}>{updateStatus}</Text>
@@ -117,10 +207,7 @@ export default function SettingsScreen() {
               style={[
                 styles.colorCircle,
                 { backgroundColor: item },
-                item === accentColor && {
-                  borderColor: theme.accent,
-                  borderWidth: 3,
-                },
+                item === accentColor && { borderColor: theme.accent, borderWidth: 3 },
               ]}
               onPress={() => setAccentColor(item)}
             />
@@ -131,46 +218,19 @@ export default function SettingsScreen() {
       </View>
       {/* About Section */}
       <View style={styles.section}>
-        <Text style={{ color: theme.text }}>App Version: 1.0.0</Text>
         <Text style={{ color: theme.text }}>Data Forge Apps LLC   *   GetDataForge.com</Text>
       </View>
     </View>
   );
 }
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  gearSmithContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  gearSmithText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginRight: 12,
-  },
-  profileImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#ccc',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+  container: { flex: 1, padding: 16 },
+  gearSmithContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  gearSmithText: { fontSize: 28, fontWeight: 'bold', marginLeft: 8 },
+  profileImage: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#ccc' },
+  section: { marginBottom: 24 },
+  heading: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   colorCircle: {
     height: 36,
     width: 36,
@@ -186,10 +246,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     minWidth: 100,
   },
-  authButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  authButtonText: { fontSize: 16, fontWeight: '600' },
   updateButton: {
     paddingVertical: 12,
     borderRadius: 6,
@@ -197,8 +254,18 @@ const styles = StyleSheet.create({
     marginTop: 8,
     minWidth: 150,
   },
-  updateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  updateButtonText: { fontSize: 16, fontWeight: '600' },
+  loginCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginTop: 12,
+  },
+  input: {
+    borderWidth: 1,
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 12,
   },
 });
