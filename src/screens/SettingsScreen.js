@@ -95,21 +95,59 @@ export default function SettingsScreen() {
   const passwordValidation = validatePassword(passwordInput);
 
   const checkForUpdates = async () => {
-    setUpdateStatus('Checking for updates...');
-    try {
-      const result = await UpdateChecker.checkForUpdate();
-      if (result.available) {
-        setUpdateStatus('Update available! Starting download...');
-        await UpdateChecker.startUpdate(result.type);
-        setUpdateStatus('Update downloaded. Restart app to install.');
-      } else {
-        setUpdateStatus('App is up to date.');
-      }
-    } catch (error) {
-      setUpdateStatus(`Error checking updates: ${error.message}`);
+  setUpdateStatus('Checking for updates...');
+  try {
+    const result = await UpdateChecker.checkForUpdate();
+    if (result.available) {
+      // Ask user what they prefer
+      Alert.alert(
+        'Update Available',
+        'A new version is available. How would you like to proceed?',
+        [
+          {
+            text: 'Download in Background',
+            onPress: async () => {
+              setUpdateStatus('Downloading update...');
+              try {
+                await UpdateChecker.startUpdate(false); // Don't restart immediately
+                setUpdateStatus('Update will install on next app restart');
+              } catch (error) {
+                setUpdateStatus('Update failed. Please try again.');
+              }
+              setTimeout(() => setUpdateStatus(''), 5000);
+            },
+          },
+          {
+            text: 'Install Now',
+            onPress: async () => {
+              setUpdateStatus('Installing update...');
+              try {
+                await UpdateChecker.startUpdate(true); // Restart immediately
+                // App will restart, so code below won't execute
+              } catch (error) {
+                setUpdateStatus('Update failed. Please try again.');
+                setTimeout(() => setUpdateStatus(''), 5000);
+              }
+            },
+          },
+          {
+            text: 'Later',
+            style: 'cancel',
+            onPress: () => {
+              setUpdateStatus('');
+            },
+          },
+        ]
+      );
+    } else {
+      setUpdateStatus('App is up to date.');
+      setTimeout(() => setUpdateStatus(''), 3000);
     }
+  } catch (error) {
+    setUpdateStatus(`Error checking updates: ${error.message}`);
     setTimeout(() => setUpdateStatus(''), 5000);
-  };
+  }
+};
 
   const handleLogin = async () => {
     if (!emailInput.trim() || !passwordInput) {
