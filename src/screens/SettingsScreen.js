@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,14 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
 import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
 import UpdateChecker from '../services/UpdateChecker';
 import auth from '@react-native-firebase/auth';
-
 
 const ACCENT_COLORS = [
   '#FF6F61',
@@ -43,6 +45,12 @@ export default function SettingsScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [updateStatus, setUpdateStatus] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+
+  // Refs for input fields
+  const emailInputRef = useRef(null);
+  const passwordInputRef = useRef(null);
+  const confirmPasswordInputRef = useRef(null);
 
   // Clear inputs and auth form when user logs in or out
   useEffect(() => {
@@ -51,8 +59,27 @@ export default function SettingsScreen() {
       setPasswordInput('');
       setConfirmPasswordInput('');
       setShowAuthForm(false);
+      setEmailTouched(false);
     }
   }, [user]);
+
+  // Auto-focus email field when form opens
+  useEffect(() => {
+    if (showAuthForm) {
+      setTimeout(() => {
+        emailInputRef.current?.focus();
+      }, 100);
+    }
+  }, [showAuthForm]);
+
+  // Email validation
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const isEmailValid = validateEmail(emailInput);
+  const showEmailError = emailTouched && emailInput.length > 0 && !isEmailValid;
 
   // Password validation
   const validatePassword = (password) => {
@@ -90,6 +117,11 @@ export default function SettingsScreen() {
       return;
     }
 
+    if (!isEmailValid) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
     setLoading(true);
     try {
       await login(emailInput.trim(), passwordInput);
@@ -104,6 +136,11 @@ export default function SettingsScreen() {
   const handleSignup = async () => {
     if (!emailInput.trim() || !passwordInput || !confirmPasswordInput) {
       Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    if (!isEmailValid) {
+      Alert.alert('Error', 'Please enter a valid email address');
       return;
     }
 
@@ -129,32 +166,37 @@ export default function SettingsScreen() {
   };
 
   const handleForgotPassword = async () => {
-  if (!emailInput.trim()) {
-    Alert.alert('Error', 'Please enter your email address first');
-    return;
-  }
-  
-  try {
-    await auth().sendPasswordResetEmail(emailInput.trim());
-    Alert.alert(
-      'Check Your Email',
-      `We've sent a password reset link to ${emailInput.trim()}. Check your email and follow the instructions to reset your password.`,
-      [{ text: 'OK' }]
-    );
-  } catch (error) {
-    let errorMessage = 'Something went wrong. Please try again.';
-    
-    if (error.code === 'auth/user-not-found') {
-      errorMessage = 'No account found with this email address.';
-    } else if (error.code === 'auth/invalid-email') {
-      errorMessage = 'Please enter a valid email address.';
-    } else if (error.code === 'auth/too-many-requests') {
-      errorMessage = 'Too many attempts. Please try again later.';
+    if (!emailInput.trim()) {
+      Alert.alert('Error', 'Please enter your email address first');
+      return;
     }
-    
-    Alert.alert('Error', errorMessage);
-  }
-};
+
+    if (!isEmailValid) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    try {
+      await auth().sendPasswordResetEmail(emailInput.trim());
+      Alert.alert(
+        'Check Your Email',
+        `We've sent a password reset link to ${emailInput.trim()}. Check your email and follow the instructions to reset your password.`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      let errorMessage = 'Something went wrong. Please try again.';
+
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email address.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many attempts. Please try again later.';
+      }
+
+      Alert.alert('Error', errorMessage);
+    }
+  };
 
   const openAuthForm = (mode) => {
     setAuthMode(mode);
@@ -164,254 +206,301 @@ export default function SettingsScreen() {
     setConfirmPasswordInput('');
     setShowPassword(false);
     setShowConfirmPassword(false);
+    setEmailTouched(false);
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* GearSmith name and logo */}
-      <View style={styles.gearSmithContainer}>
-        <Image
-          source={require('../../assets/GearSmithLogo.png')}
-          style={styles.profileImage}
-          resizeMode="contain"
-        />
-        <Text style={[styles.gearSmithText, { color: theme.text }]}>GearSmith</Text>
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <ScrollView
+        style={[styles.container, { backgroundColor: theme.background }]}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
+        {/* GearSmith name and logo */}
+        <View style={styles.gearSmithContainer}>
+          <Image
+            source={require('../../assets/GearSmithLogo.png')}
+            style={styles.profileImage}
+            resizeMode="contain"
+          />
+          <Text style={[styles.gearSmithText, { color: theme.text }]}>GearSmith</Text>
+        </View>
 
-      {/* User Profile Section */}
-      <View style={styles.section}>
-        <Text style={[styles.heading, { color: theme.text }]}>User Profile</Text>
-        {user ? (
-          <>
-            <Text style={{ color: theme.text, marginBottom: 8 }}>Logged in as: {user.email}</Text>
-            <TouchableOpacity
-              onPress={logout}
-              style={[styles.authButton, { backgroundColor: theme.accent }]}
-              accessibilityRole="button"
-              accessibilityLabel="Logout button"
-            >
-              <Text style={[styles.authButtonText, { color: theme.text }]}>Logout</Text>
-            </TouchableOpacity>
-          </>
-        ) : !showAuthForm ? (
-          <View style={styles.authOptionsContainer}>
-            <TouchableOpacity
-              onPress={() => openAuthForm('login')}
-              style={[styles.authOptionButton, { backgroundColor: theme.accent }]}
-              accessibilityRole="button"
-              accessibilityLabel="Open login form"
-            >
-              <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => openAuthForm('signup')}
-              style={[styles.authOptionButton, { backgroundColor: theme.accent }]}
-              accessibilityRole="button"
-              accessibilityLabel="Open sign up form"
-            >
-              <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.loginCard}>
-            <Text style={[styles.formTitle, { color: theme.text }]}>
-              {authMode === 'login' ? 'Login to Your Account' : 'Create New Account'}
-            </Text>
-
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Email</Text>
-            <TextInput
-              placeholder="Enter your email"
-              placeholderTextColor="#888"
-              value={emailInput}
-              onChangeText={setEmailInput}
-              style={[styles.input, { color: theme.text, borderColor: theme.text }]}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              editable={!loading}
-            />
-
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Password</Text>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                placeholder="Enter your password"
-                placeholderTextColor="#888"
-                secureTextEntry={!showPassword}
-                value={passwordInput}
-                onChangeText={setPasswordInput}
-                style={[styles.input, styles.passwordInput, { color: theme.text, borderColor: theme.text }]}
-                editable={!loading}
-              />
+        {/* User Profile Section */}
+        <View style={styles.section}>
+          <Text style={[styles.heading, { color: theme.text }]}>User Profile</Text>
+          {user ? (
+            <>
+              <Text style={{ color: theme.text, marginBottom: 8 }}>Logged in as: {user.email}</Text>
               <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeIcon}
-                accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                onPress={logout}
+                style={[styles.authButton, { backgroundColor: theme.accent }]}
+                accessibilityRole="button"
+                accessibilityLabel="Logout button"
               >
-                <Text style={{ color: theme.accent, fontSize: 18 }}>
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
-                </Text>
+                <Text style={[styles.authButtonText, { color: theme.text }]}>Logout</Text>
+              </TouchableOpacity>
+            </>
+          ) : !showAuthForm ? (
+            <View style={styles.authOptionsContainer}>
+              <TouchableOpacity
+                onPress={() => openAuthForm('login')}
+                style={[styles.authOptionButton, { backgroundColor: theme.accent }]}
+                accessibilityRole="button"
+                accessibilityLabel="Open login form"
+              >
+                <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => openAuthForm('signup')}
+                style={[styles.authOptionButton, { backgroundColor: theme.accent }]}
+                accessibilityRole="button"
+                accessibilityLabel="Open sign up form"
+              >
+                <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
               </TouchableOpacity>
             </View>
-
-            {authMode === 'signup' && (
-              <>
-                <Text style={[styles.inputLabel, { color: theme.text }]}>Confirm Password</Text>
-                <View style={styles.passwordContainer}>
-                  <TextInput
-                    placeholder="Confirm your password"
-                    placeholderTextColor="#888"
-                    secureTextEntry={!showConfirmPassword}
-                    value={confirmPasswordInput}
-                    onChangeText={setConfirmPasswordInput}
-                    style={[styles.input, styles.passwordInput, { color: theme.text, borderColor: theme.text }]}
-                    editable={!loading}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                    style={styles.eyeIcon}
-                    accessibilityLabel={showConfirmPassword ? "Hide password" : "Show password"}
-                  >
-                    <Text style={{ color: theme.accent, fontSize: 18 }}>
-                      {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Password Requirements */}
-                <View style={styles.passwordRequirements}>
-                  <Text style={[styles.requirementsTitle, { color: theme.text }]}>
-                    Password Requirements:
-                  </Text>
-                  <View style={styles.requirementRow}>
-                    <Text style={{ color: passwordValidation.hasMinLength ? '#4CAF50' : '#888' }}>
-                      {passwordValidation.hasMinLength ? '✓' : '○'}
-                    </Text>
-                    <Text style={[styles.requirementText, { 
-                      color: passwordValidation.hasMinLength ? '#4CAF50' : theme.text 
-                    }]}>
-                      At least 8 characters
-                    </Text>
-                  </View>
-                  <View style={styles.requirementRow}>
-                    <Text style={{ color: passwordValidation.hasNumber ? '#4CAF50' : '#888' }}>
-                      {passwordValidation.hasNumber ? '✓' : '○'}
-                    </Text>
-                    <Text style={[styles.requirementText, { 
-                      color: passwordValidation.hasNumber ? '#4CAF50' : theme.text 
-                    }]}>
-                      At least one number
-                    </Text>
-                  </View>
-                </View>
-              </>
-            )}
-
-            {loading && <ActivityIndicator size="small" color={theme.accent} style={{ marginVertical: 12 }} />}
-
-            <TouchableOpacity
-              onPress={authMode === 'login' ? handleLogin : handleSignup}
-              style={[styles.authButton, { backgroundColor: theme.accent, opacity: loading ? 0.6 : 1 }]}
-              accessibilityRole="button"
-              accessibilityLabel={authMode === 'login' ? "Login button" : "Sign up button"}
-              disabled={loading}
-            >
-              <Text style={[styles.authButtonText, { color: theme.text }]}>
-                {authMode === 'login' ? 'Login' : 'Sign Up'}
+          ) : (
+            <View style={styles.loginCard}>
+              <Text style={[styles.formTitle, { color: theme.text }]}>
+                {authMode === 'login' ? 'Login to Your Account' : 'Create New Account'}
               </Text>
-            </TouchableOpacity>
 
-            {authMode === 'login' && (
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Email</Text>
+              <TextInput
+                ref={emailInputRef}
+                placeholder="Enter your email"
+                placeholderTextColor="#888"
+                value={emailInput}
+                onChangeText={setEmailInput}
+                onBlur={() => setEmailTouched(true)}
+                style={[
+                  styles.input,
+                  { color: theme.text, borderColor: showEmailError ? '#FF3B30' : theme.text }
+                ]}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!loading}
+                returnKeyType="next"
+                onSubmitEditing={() => passwordInputRef.current?.focus()}
+                blurOnSubmit={false}
+              />
+              {showEmailError && (
+                <Text style={styles.errorText}>Please enter a valid email address</Text>
+              )}
+
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  ref={passwordInputRef}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#888"
+                  secureTextEntry={!showPassword}
+                  value={passwordInput}
+                  onChangeText={setPasswordInput}
+                  style={[styles.input, styles.passwordInput, { color: theme.text, borderColor: theme.text }]}
+                  editable={!loading}
+                  returnKeyType={authMode === 'signup' ? 'next' : 'done'}
+                  onSubmitEditing={() => {
+                    if (authMode === 'signup') {
+                      confirmPasswordInputRef.current?.focus();
+                    } else {
+                      Keyboard.dismiss();
+                      handleLogin();
+                    }
+                  }}
+                  blurOnSubmit={authMode === 'login'}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                >
+                  <Text style={{ color: theme.accent, fontSize: 18 }}>
+                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {authMode === 'signup' && (
+                <>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Confirm Password</Text>
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      ref={confirmPasswordInputRef}
+                      placeholder="Confirm your password"
+                      placeholderTextColor="#888"
+                      secureTextEntry={!showConfirmPassword}
+                      value={confirmPasswordInput}
+                      onChangeText={setConfirmPasswordInput}
+                      style={[styles.input, styles.passwordInput, { color: theme.text, borderColor: theme.text }]}
+                      editable={!loading}
+                      returnKeyType="done"
+                      onSubmitEditing={() => {
+                        Keyboard.dismiss();
+                        handleSignup();
+                      }}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                      style={styles.eyeIcon}
+                      accessibilityLabel={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      <Text style={{ color: theme.accent, fontSize: 18 }}>
+                        {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Password Requirements */}
+                  <View style={styles.passwordRequirements}>
+                    <Text style={[styles.requirementsTitle, { color: theme.text }]}>
+                      Password Requirements:
+                    </Text>
+                    <View style={styles.requirementRow}>
+                      <Text style={{ color: passwordValidation.hasMinLength ? '#4CAF50' : '#888' }}>
+                        {passwordValidation.hasMinLength ? '✓' : '○'}
+                      </Text>
+                      <Text style={[styles.requirementText, {
+                        color: passwordValidation.hasMinLength ? '#4CAF50' : theme.text
+                      }]}>
+                        At least 8 characters
+                      </Text>
+                    </View>
+                    <View style={styles.requirementRow}>
+                      <Text style={{ color: passwordValidation.hasNumber ? '#4CAF50' : '#888' }}>
+                        {passwordValidation.hasNumber ? '✓' : '○'}
+                      </Text>
+                      <Text style={[styles.requirementText, {
+                        color: passwordValidation.hasNumber ? '#4CAF50' : theme.text
+                      }]}>
+                        At least one number
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
+
               <TouchableOpacity
-                onPress={handleForgotPassword}
+                onPress={authMode === 'login' ? handleLogin : handleSignup}
+                style={[
+                  styles.authButton,
+                  {
+                    backgroundColor: theme.accent,
+                    opacity: loading ? 0.6 : 1
+                  }
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={authMode === 'login' ? "Login button" : "Sign up button"}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color={theme.text} />
+                ) : (
+                  <Text style={[styles.authButtonText, { color: theme.text }]}>
+                    {authMode === 'login' ? 'Login' : 'Sign Up'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              {authMode === 'login' && (
+                <TouchableOpacity
+                  onPress={handleForgotPassword}
+                  style={{ marginTop: 12, alignItems: 'center' }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Forgot password"
+                  disabled={loading}
+                >
+                  <Text style={{ color: theme.accent, fontSize: 14 }}>Forgot Password?</Text>
+                </TouchableOpacity>
+              )}
+
+              <View style={styles.switchModeContainer}>
+                <Text style={{ color: theme.text }}>
+                  {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+                  disabled={loading}
+                >
+                  <Text style={{ color: theme.accent, fontWeight: '600' }}>
+                    {authMode === 'login' ? 'Sign Up' : 'Login'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => setShowAuthForm(false)}
                 style={{ marginTop: 12, alignItems: 'center' }}
                 accessibilityRole="button"
-                accessibilityLabel="Forgot password"
+                accessibilityLabel="Cancel"
                 disabled={loading}
               >
-                <Text style={{ color: theme.accent, fontSize: 14 }}>Forgot Password?</Text>
+                <Text style={{ color: loading ? '#888' : theme.accent }}>Cancel</Text>
               </TouchableOpacity>
-            )}
 
-            <View style={styles.switchModeContainer}>
-              <Text style={{ color: theme.text }}>
-                {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
-              </Text>
-              <TouchableOpacity
-                onPress={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                disabled={loading}
-              >
-                <Text style={{ color: theme.accent, fontWeight: '600' }}>
-                  {authMode === 'login' ? 'Sign Up' : 'Login'}
-                </Text>
-              </TouchableOpacity>
+              {authError ? (
+                <Text style={{ color: 'red', marginTop: 8, textAlign: 'center' }}>{authError}</Text>
+              ) : null}
             </View>
-
-            <TouchableOpacity
-              onPress={() => setShowAuthForm(false)}
-              style={{ marginTop: 12, alignItems: 'center' }}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel"
-              disabled={loading}
-            >
-              <Text style={{ color: theme.accent }}>Cancel</Text>
-            </TouchableOpacity>
-
-            {authError ? (
-              <Text style={{ color: 'red', marginTop: 8, textAlign: 'center' }}>{authError}</Text>
-            ) : null}
-          </View>
-        )}
-      </View>
-
-      {/* App Update Section */}
-      <View style={styles.section}>
-        <Text style={[styles.heading, { color: theme.text }]}>App Updates</Text>
-        <TouchableOpacity
-          onPress={checkForUpdates}
-          style={[styles.updateButton, { backgroundColor: theme.accent }]}
-          accessibilityRole="button"
-          accessibilityLabel="Check for app updates"
-        >
-          <Text style={[styles.updateButtonText, { color: theme.text }]}>Check for App Updates</Text>
-        </TouchableOpacity>
-        {updateStatus ? (
-          <Text style={{ color: theme.text, marginTop: 8 }}>{updateStatus}</Text>
-        ) : null}
-      </View>
-
-      {/* Theme Customization Section */}
-      <View style={styles.section}>
-        <Text style={[styles.heading, { color: theme.text }]}>Theme</Text>
-        <View style={styles.row}>
-          <Text style={{ color: theme.text }}>Dark Mode</Text>
-          <Switch value={theme.mode === 'dark'} onValueChange={toggleThemeMode} />
-        </View>
-        <Text style={{ color: theme.text, marginTop: 10 }}>Accent Color</Text>
-        <FlatList
-          horizontal
-          data={ACCENT_COLORS}
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              accessibilityLabel={`Select accent color ${item}`}
-              accessibilityRole="button"
-              style={[
-                styles.colorCircle,
-                { backgroundColor: item },
-                item === accentColor && { borderColor: theme.accent, borderWidth: 3 },
-              ]}
-              onPress={() => setAccentColor(item)}
-            />
           )}
-          contentContainerStyle={{ marginTop: 8 }}
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
+        </View>
 
-      {/* About Section */}
-      <View style={styles.section}>
-        <Text style={{ color: theme.text }}>Data Forge Apps LLC   *   GetDataForge.com</Text>
-      </View>
-    </ScrollView>
+        {/* App Update Section */}
+        <View style={styles.section}>
+          <Text style={[styles.heading, { color: theme.text }]}>App Updates</Text>
+          <TouchableOpacity
+            onPress={checkForUpdates}
+            style={[styles.updateButton, { backgroundColor: theme.accent }]}
+            accessibilityRole="button"
+            accessibilityLabel="Check for app updates"
+          >
+            <Text style={[styles.updateButtonText, { color: theme.text }]}>Check for App Updates</Text>
+          </TouchableOpacity>
+          {updateStatus ? (
+            <Text style={{ color: theme.text, marginTop: 8 }}>{updateStatus}</Text>
+          ) : null}
+        </View>
+
+        {/* Theme Customization Section */}
+        <View style={styles.section}>
+          <Text style={[styles.heading, { color: theme.text }]}>Theme</Text>
+          <View style={styles.row}>
+            <Text style={{ color: theme.text }}>Dark Mode</Text>
+            <Switch value={theme.mode === 'dark'} onValueChange={toggleThemeMode} />
+          </View>
+          <Text style={{ color: theme.text, marginTop: 10 }}>Accent Color</Text>
+          <FlatList
+            horizontal
+            data={ACCENT_COLORS}
+            keyExtractor={(item) => item}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                accessibilityLabel={`Select accent color ${item}`}
+                accessibilityRole="button"
+                style={[
+                  styles.colorCircle,
+                  { backgroundColor: item },
+                  item === accentColor && { borderColor: theme.accent, borderWidth: 3 },
+                ]}
+                onPress={() => setAccentColor(item)}
+              />
+            )}
+            contentContainerStyle={{ marginTop: 8 }}
+            showsHorizontalScrollIndicator={false}
+          />
+        </View>
+
+        {/* About Section */}
+        <View style={styles.section}>
+          <Text style={{ color: theme.text }}>Data Forge Apps LLC   *   GetDataForge.com</Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -446,7 +535,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 6,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 8,
+    minHeight: 44,
   },
   authButtonText: { fontSize: 16, fontWeight: '600' },
   updateButton: {
@@ -521,5 +612,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 16,
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 8,
   },
 });
