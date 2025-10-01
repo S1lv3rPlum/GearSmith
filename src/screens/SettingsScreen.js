@@ -10,10 +10,12 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
 import UpdateChecker from '../services/UpdateChecker';
+
 const ACCENT_COLORS = [
   '#FF6F61',
   '#6B5B95',
@@ -26,22 +28,43 @@ const ACCENT_COLORS = [
   '#DD4124',
   '#45B8AC',
 ];
+
 export default function SettingsScreen() {
   const { theme, toggleThemeMode, accentColor, setAccentColor } = useContext(ThemeContext);
   const { user, login, signup, logout, authError } = useContext(AuthContext);
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
-  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [showAuthForm, setShowAuthForm] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [updateStatus, setUpdateStatus] = useState('');
   const [loading, setLoading] = useState(false);
-  // Clear inputs and login form when user logs in or out
+
+  // Clear inputs and auth form when user logs in or out
   useEffect(() => {
     if (user) {
       setEmailInput('');
       setPasswordInput('');
-      setShowLoginForm(false);
+      setConfirmPasswordInput('');
+      setShowAuthForm(false);
     }
   }, [user]);
+
+  // Password validation
+  const validatePassword = (password) => {
+    const hasMinLength = password.length >= 8;
+    const hasNumber = /\d/.test(password);
+    return {
+      isValid: hasMinLength && hasNumber,
+      hasMinLength,
+      hasNumber,
+    };
+  };
+
+  const passwordValidation = validatePassword(passwordInput);
+
   const checkForUpdates = async () => {
     setUpdateStatus('Checking for updates...');
     try {
@@ -58,7 +81,13 @@ export default function SettingsScreen() {
     }
     setTimeout(() => setUpdateStatus(''), 5000);
   };
+
   const handleLogin = async () => {
+    if (!emailInput.trim() || !passwordInput) {
+      Alert.alert('Error', 'Please enter both email and password');
+      return;
+    }
+
     setLoading(true);
     try {
       await login(emailInput.trim(), passwordInput);
@@ -69,7 +98,23 @@ export default function SettingsScreen() {
       setLoading(false);
     }
   };
+
   const handleSignup = async () => {
+    if (!emailInput.trim() || !passwordInput || !confirmPasswordInput) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    if (!passwordValidation.isValid) {
+      Alert.alert('Error', 'Password does not meet requirements');
+      return;
+    }
+
+    if (passwordInput !== confirmPasswordInput) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
     setLoading(true);
     try {
       await signup(emailInput.trim(), passwordInput);
@@ -80,8 +125,27 @@ export default function SettingsScreen() {
       setLoading(false);
     }
   };
+
+  const handleForgotPassword = () => {
+    Alert.alert(
+      'Forgot Password',
+      'Password reset functionality will be implemented soon.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const openAuthForm = (mode) => {
+    setAuthMode(mode);
+    setShowAuthForm(true);
+    setEmailInput('');
+    setPasswordInput('');
+    setConfirmPasswordInput('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* GearSmith name and logo */}
       <View style={styles.gearSmithContainer}>
         <Image
@@ -91,6 +155,7 @@ export default function SettingsScreen() {
         />
         <Text style={[styles.gearSmithText, { color: theme.text }]}>GearSmith</Text>
       </View>
+
       {/* User Profile Section */}
       <View style={styles.section}>
         <Text style={[styles.heading, { color: theme.text }]}>User Profile</Text>
@@ -106,21 +171,34 @@ export default function SettingsScreen() {
               <Text style={[styles.authButtonText, { color: theme.text }]}>Logout</Text>
             </TouchableOpacity>
           </>
-        ) : !showLoginForm ? (
-          <TouchableOpacity
-            onPress={() => setShowLoginForm(true)}
-            style={styles.loginCard}
-            accessibilityRole="button"
-            accessibilityLabel="Open login form"
-          >
-            <Text style={[styles.authButtonText, { color: theme.text, textAlign: 'center' }]}>
-              Login / Sign Up
-            </Text>
-          </TouchableOpacity>
+        ) : !showAuthForm ? (
+          <View style={styles.authOptionsContainer}>
+            <TouchableOpacity
+              onPress={() => openAuthForm('login')}
+              style={[styles.authOptionButton, { backgroundColor: theme.accent }]}
+              accessibilityRole="button"
+              accessibilityLabel="Open login form"
+            >
+              <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => openAuthForm('signup')}
+              style={[styles.authOptionButton, { backgroundColor: theme.accent }]}
+              accessibilityRole="button"
+              accessibilityLabel="Open sign up form"
+            >
+              <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <View style={styles.loginCard}>
+            <Text style={[styles.formTitle, { color: theme.text }]}>
+              {authMode === 'login' ? 'Login to Your Account' : 'Create New Account'}
+            </Text>
+
+            <Text style={[styles.inputLabel, { color: theme.text }]}>Email</Text>
             <TextInput
-              placeholder="Email"
+              placeholder="Enter your email"
               placeholderTextColor="#888"
               value={emailInput}
               onChangeText={setEmailInput}
@@ -129,50 +207,139 @@ export default function SettingsScreen() {
               autoCapitalize="none"
               editable={!loading}
             />
-            <TextInput
-              placeholder="Password"
-              placeholderTextColor="#888"
-              secureTextEntry
-              value={passwordInput}
-              onChangeText={setPasswordInput}
-              style={[styles.input, { color: theme.text, borderColor: theme.text }]}
-              editable={!loading}
-            />
-            {loading && <ActivityIndicator size="small" color={theme.accent} />}
+
+            <Text style={[styles.inputLabel, { color: theme.text }]}>Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                placeholder="Enter your password"
+                placeholderTextColor="#888"
+                secureTextEntry={!showPassword}
+                value={passwordInput}
+                onChangeText={setPasswordInput}
+                style={[styles.input, styles.passwordInput, { color: theme.text, borderColor: theme.text }]}
+                editable={!loading}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIcon}
+                accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+              >
+                <Text style={{ color: theme.accent, fontSize: 18 }}>
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {authMode === 'signup' && (
+              <>
+                <Text style={[styles.inputLabel, { color: theme.text }]}>Confirm Password</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    placeholder="Confirm your password"
+                    placeholderTextColor="#888"
+                    secureTextEntry={!showConfirmPassword}
+                    value={confirmPasswordInput}
+                    onChangeText={setConfirmPasswordInput}
+                    style={[styles.input, styles.passwordInput, { color: theme.text, borderColor: theme.text }]}
+                    editable={!loading}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={styles.eyeIcon}
+                    accessibilityLabel={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    <Text style={{ color: theme.accent, fontSize: 18 }}>
+                      {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Password Requirements */}
+                <View style={styles.passwordRequirements}>
+                  <Text style={[styles.requirementsTitle, { color: theme.text }]}>
+                    Password Requirements:
+                  </Text>
+                  <View style={styles.requirementRow}>
+                    <Text style={{ color: passwordValidation.hasMinLength ? '#4CAF50' : '#888' }}>
+                      {passwordValidation.hasMinLength ? '✓' : '○'}
+                    </Text>
+                    <Text style={[styles.requirementText, { 
+                      color: passwordValidation.hasMinLength ? '#4CAF50' : theme.text 
+                    }]}>
+                      At least 8 characters
+                    </Text>
+                  </View>
+                  <View style={styles.requirementRow}>
+                    <Text style={{ color: passwordValidation.hasNumber ? '#4CAF50' : '#888' }}>
+                      {passwordValidation.hasNumber ? '✓' : '○'}
+                    </Text>
+                    <Text style={[styles.requirementText, { 
+                      color: passwordValidation.hasNumber ? '#4CAF50' : theme.text 
+                    }]}>
+                      At least one number
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
+
+            {loading && <ActivityIndicator size="small" color={theme.accent} style={{ marginVertical: 12 }} />}
+
             <TouchableOpacity
-              onPress={handleLogin}
-              style={[styles.authButton, { backgroundColor: theme.accent, marginBottom: 8, opacity: loading ? 0.6 : 1 }]}
-              accessibilityRole="button"
-              accessibilityLabel="Login button"
-              disabled={loading}
-            >
-              <Text style={[styles.authButtonText, { color: theme.text }]}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleSignup}
+              onPress={authMode === 'login' ? handleLogin : handleSignup}
               style={[styles.authButton, { backgroundColor: theme.accent, opacity: loading ? 0.6 : 1 }]}
               accessibilityRole="button"
-              accessibilityLabel="Sign Up button"
+              accessibilityLabel={authMode === 'login' ? "Login button" : "Sign up button"}
               disabled={loading}
             >
-              <Text style={[styles.authButtonText, { color: theme.text }]}>Sign Up</Text>
+              <Text style={[styles.authButtonText, { color: theme.text }]}>
+                {authMode === 'login' ? 'Login' : 'Sign Up'}
+              </Text>
             </TouchableOpacity>
+
+            {authMode === 'login' && (
+              <TouchableOpacity
+                onPress={handleForgotPassword}
+                style={{ marginTop: 12, alignItems: 'center' }}
+                accessibilityRole="button"
+                accessibilityLabel="Forgot password"
+                disabled={loading}
+              >
+                <Text style={{ color: theme.accent, fontSize: 14 }}>Forgot Password?</Text>
+              </TouchableOpacity>
+            )}
+
+            <View style={styles.switchModeContainer}>
+              <Text style={{ color: theme.text }}>
+                {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+                disabled={loading}
+              >
+                <Text style={{ color: theme.accent, fontWeight: '600' }}>
+                  {authMode === 'login' ? 'Sign Up' : 'Login'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity
-              onPress={() => setShowLoginForm(false)}
+              onPress={() => setShowAuthForm(false)}
               style={{ marginTop: 12, alignItems: 'center' }}
               accessibilityRole="button"
-              accessibilityLabel="Cancel login form"
+              accessibilityLabel="Cancel"
               disabled={loading}
             >
               <Text style={{ color: theme.accent }}>Cancel</Text>
             </TouchableOpacity>
-            {/* Optionally display authError if your AuthContext provides it */}
+
             {authError ? (
               <Text style={{ color: 'red', marginTop: 8, textAlign: 'center' }}>{authError}</Text>
             ) : null}
           </View>
         )}
       </View>
+
       {/* App Update Section */}
       <View style={styles.section}>
         <Text style={[styles.heading, { color: theme.text }]}>App Updates</Text>
@@ -188,6 +355,7 @@ export default function SettingsScreen() {
           <Text style={{ color: theme.text, marginTop: 8 }}>{updateStatus}</Text>
         ) : null}
       </View>
+
       {/* Theme Customization Section */}
       <View style={styles.section}>
         <Text style={[styles.heading, { color: theme.text }]}>Theme</Text>
@@ -216,13 +384,15 @@ export default function SettingsScreen() {
           showsHorizontalScrollIndicator={false}
         />
       </View>
+
       {/* About Section */}
       <View style={styles.section}>
         <Text style={{ color: theme.text }}>Data Forge Apps LLC   *   GetDataForge.com</Text>
       </View>
-    </View>
+    </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
   gearSmithContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
@@ -239,12 +409,22 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
+  authOptionsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  authOptionButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
   authButton: {
     paddingVertical: 12,
     borderRadius: 6,
     alignItems: 'center',
     marginTop: 8,
-    minWidth: 100,
   },
   authButtonText: { fontSize: 16, fontWeight: '600' },
   updateButton: {
@@ -252,7 +432,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: 'center',
     marginTop: 8,
-    minWidth: 150,
   },
   updateButtonText: { fontSize: 16, fontWeight: '600' },
   loginCard: {
@@ -262,10 +441,63 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     marginTop: 12,
   },
+  formTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 6,
+    marginTop: 8,
+  },
   input: {
     borderWidth: 1,
-    padding: 8,
+    padding: 12,
     borderRadius: 6,
     marginBottom: 12,
+    fontSize: 16,
+  },
+  passwordContainer: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  passwordInput: {
+    marginBottom: 0,
+    paddingRight: 45,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    padding: 4,
+  },
+  passwordRequirements: {
+    backgroundColor: 'rgba(128, 128, 128, 0.1)',
+    padding: 12,
+    borderRadius: 6,
+    marginBottom: 12,
+  },
+  requirementsTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  requirementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  requirementText: {
+    fontSize: 13,
+    marginLeft: 8,
+  },
+  switchModeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
   },
 });
