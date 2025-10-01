@@ -15,6 +15,8 @@ import {
 import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
 import UpdateChecker from '../services/UpdateChecker';
+import auth from '@react-native-firebase/auth';
+
 
 const ACCENT_COLORS = [
   '#FF6F61',
@@ -126,13 +128,33 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleForgotPassword = () => {
+  const handleForgotPassword = async () => {
+  if (!emailInput.trim()) {
+    Alert.alert('Error', 'Please enter your email address first');
+    return;
+  }
+  
+  try {
+    await auth().sendPasswordResetEmail(emailInput.trim());
     Alert.alert(
-      'Forgot Password',
-      'Password reset functionality will be implemented soon.',
+      'Check Your Email',
+      `We've sent a password reset link to ${emailInput.trim()}. Check your email and follow the instructions to reset your password.`,
       [{ text: 'OK' }]
     );
-  };
+  } catch (error) {
+    let errorMessage = 'Something went wrong. Please try again.';
+    
+    if (error.code === 'auth/user-not-found') {
+      errorMessage = 'No account found with this email address.';
+    } else if (error.code === 'auth/invalid-email') {
+      errorMessage = 'Please enter a valid email address.';
+    } else if (error.code === 'auth/too-many-requests') {
+      errorMessage = 'Too many attempts. Please try again later.';
+    }
+    
+    Alert.alert('Error', errorMessage);
+  }
+};
 
   const openAuthForm = (mode) => {
     setAuthMode(mode);
