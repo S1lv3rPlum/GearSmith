@@ -4,18 +4,9 @@
     "slug": "snack-b1ed90bd-53bf-46df-bc6f-f37db514ca75",
     "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/app-icon.png",
+    "icon": "./assets/app-icon.png",           // Main app launcher icon
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "updates": {
-      "enabled": true,
-      "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/9e61c7a5-7ceb-4f21-853d-7bfb6ad27a33"
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -24,7 +15,7 @@
     "android": {
       "versionCode": 4,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",  // Adaptive icon foreground (PNG)
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -38,7 +29,7 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png"   // Web favicon PNG (small icon for browser tabs)
     },
     "extra": {
       "eas": {
