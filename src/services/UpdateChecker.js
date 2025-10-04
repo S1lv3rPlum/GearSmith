@@ -1,4 +1,4 @@
-import CodePush from 'react-native-code-push';
+import * as Updates from 'expo-updates';
 
 const UpdateChecker = {
   /**
@@ -7,16 +7,27 @@ const UpdateChecker = {
    */
   checkForUpdate: async () => {
     try {
-      const update = await CodePush.checkForUpdate();
+      // Check if we're running in Expo Go - updates don't work there
+      if (__DEV__) {
+        console.log('Updates are disabled in development mode');
+        return {
+          available: false,
+          type: null,
+          updateInfo: null,
+        };
+      }
+
+      const update = await Updates.checkForUpdateAsync();
+      
       return {
-        available: !!update,
-        type: 'codepush',
-        updateInfo: update, // Contains version info, description, etc.
+        available: update.isAvailable,
+        type: 'expo-updates',
+        updateInfo: update.isAvailable ? update.manifest : null,
       };
     } catch (error) {
-      console.error('CodePush check failed:', error);
-      return { 
-        available: false, 
+      console.error('Expo Updates check failed:', error);
+      return {
+        available: false,
         type: null,
         updateInfo: null,
       };
@@ -25,43 +36,50 @@ const UpdateChecker = {
 
   /**
    * Start the update process
-   * @param {boolean} immediate - If true, app restarts immediately. If false, installs on next restart
+   * @param {boolean} immediate - If true, app reloads immediately. If false, downloads in background
    * @returns {Promise<void>}
    */
   startUpdate: async (immediate = false) => {
     try {
-      if (immediate) {
-        // User chose to restart now - app will restart immediately
-        await CodePush.sync({
-          installMode: CodePush.InstallMode.IMMEDIATE,
-          updateDialog: {
-            title: 'Installing Update',
-            mandatoryUpdateMessage: 'The app will restart to complete the update.',
-            mandatoryContinueButtonLabel: 'Restart Now',
-          },
-        });
-      } else {
-        // Download in background, install on next app restart
-        await CodePush.sync({
-          installMode: CodePush.InstallMode.ON_NEXT_RESTART,
-        });
+      if (__DEV__) {
+        console.log('Updates are disabled in development mode');
+        return;
+      }
+
+      // Fetch the update
+      const result = await Updates.fetchUpdateAsync();
+
+      if (result.isNew) {
+        if (immediate) {
+          // Reload app immediately to apply update
+          await Updates.reloadAsync();
+        }
+        // If not immediate, update is downloaded and will apply on next app restart
       }
     } catch (error) {
-      console.error('CodePush update failed:', error);
+      console.error('Expo Updates fetch/reload failed:', error);
       throw error;
     }
   },
 
   /**
-   * Get the current CodePush metadata (version info)
+   * Get the current update info
    * @returns {Promise<object|null>}
    */
   getCurrentVersion: async () => {
     try {
-      const metadata = await CodePush.getUpdateMetadata();
-      return metadata;
+      if (__DEV__) {
+        return { isDevelopment: true };
+      }
+
+      const updateInfo = await Updates.checkForUpdateAsync();
+      return {
+        currentlyRunning: Updates.updateId,
+        channel: Updates.channel,
+        ...updateInfo,
+      };
     } catch (error) {
-      console.error('Failed to get CodePush metadata:', error);
+      console.error('Failed to get Expo Updates info:', error);
       return null;
     }
   },
